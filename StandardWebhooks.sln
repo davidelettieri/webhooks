@@ -1,0 +1,33 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardWebhooks", "src\StandardWebhooks\StandardWebhooks.csproj", "{5D8750B7-E34B-4599-9A38-B77859149877}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{92312ACB-40B8-44E8-9FDA-264114D576F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples", "Samples\Samples.csproj", "{2F68150B-4DA4-4EDD-BA5C-E745F052B680}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{E948AFB8-1CD9-4E29-91DF-9600260113DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{636D844E-B104-4DC3-9221-B7E894A5CCA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{636D844E-B104-4DC3-9221-B7E894A5CCA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{636D844E-B104-4DC3-9221-B7E894A5CCA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{636D844E-B104-4DC3-9221-B7E894A5CCA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D8750B7-E34B-4599-9A38-B77859149877}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D8750B7-E34B-4599-9A38-B77859149877}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D8750B7-E34B-4599-9A38-B77859149877}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D8750B7-E34B-4599-9A38-B77859149877}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F68150B-4DA4-4EDD-BA5C-E745F052B680}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F68150B-4DA4-4EDD-BA5C-E745F052B680}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F68150B-4DA4-4EDD-BA5C-E745F052B680}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F68150B-4DA4-4EDD-BA5C-E745F052B680}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5D8750B7-E34B-4599-9A38-B77859149877} = {92312ACB-40B8-44E8-9FDA-264114D576F1}
+		{2F68150B-4DA4-4EDD-BA5C-E745F052B680} = {E948AFB8-1CD9-4E29-91DF-9600260113DF}
+	EndGlobalSection
+EndGlobal

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -15,72 +16,104 @@ public sealed class SimmetricKeyWebhookValidationFilter(
     private readonly ILogger<SimmetricKeyWebhookValidationFilter> _logger = logger;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly IKeyRetriever _keyRetriever = keyRetriever;
-    private static readonly UTF8Encoding SafeUtf8Encoding = new UTF8Encoding(false, true);
+    private static readonly UTF8Encoding SafeUtf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
     private const string UnbrandedIdHeaderKey = "webhook-id";
     private const string UnbrandedSignatureHeaderKey = "webhook-signature";
     private const string UnbrandedTimestampHeaderKey = "webhook-timestamp";
-
     private const int ToleranceInSeconds = 60 * 5;
-    private static string _keyPrefix = "whsec_";
-    private readonly byte[] _signingKey;
 
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var headers = context.HttpContext.Request.Headers;
-        string? msgId =
-            headers.TryGetValue(UnbrandedIdHeaderKey, out var unbrandedId) ? unbrandedId.ToString() : null;
-        string? msgSignature =
-            headers.TryGetValue(UnbrandedSignatureHeaderKey, out var value) ? value.ToString() : null;
-        string? msgTimestamp =
-            headers.TryGetValue(UnbrandedTimestampHeaderKey, out var value2) ? value2.ToString() : null;
 
-        if (String.IsNullOrEmpty(msgId) || String.IsNullOrEmpty(msgSignature) || String.IsNullOrEmpty(msgTimestamp))
+        string? msgId = headers.TryGetValue(UnbrandedIdHeaderKey, out var unbrandedId) ? unbrandedId.ToString() : null;
+        string? msgSignature = headers.TryGetValue(UnbrandedSignatureHeaderKey, out var signatureHeader) ? signatureHeader.ToString() : null;
+        string? msgTimestamp = headers.TryGetValue(UnbrandedTimestampHeaderKey, out var timestampHeader) ? timestampHeader.ToString() : null;
+
+        if (string.IsNullOrWhiteSpace(msgId) || string.IsNullOrWhiteSpace(msgSignature) || string.IsNullOrWhiteSpace(msgTimestamp))
         {
+            _logger.LogWarning("Webhook rejected: missing required headers. HasId={HasId}, HasSignature={HasSig}, HasTimestamp={HasTs}",
+                !string.IsNullOrWhiteSpace(msgId), !string.IsNullOrWhiteSpace(msgSignature), !string.IsNullOrWhiteSpace(msgTimestamp));
             return Results.Unauthorized();
         }
 
         if (!VerifyTimestamp(msgTimestamp, out var timestamp))
         {
+            _logger.LogWarning("Webhook rejected: invalid or out-of-tolerance timestamp header value '{TimestampHeader}'.", msgTimestamp);
             return Results.Unauthorized();
         }
 
-        using var reader = new StreamReader(context.HttpContext.Request.Body, SafeUtf8Encoding);
-        var payload = await reader.ReadToEndAsync();
+        // Get signing key
         var key = _keyRetriever.GetKey(context);
-        var signature = Sign(key, msgId, timestamp.Value, payload);
-        var passedSignatures = msgSignature.Split(' ');
-        
-        foreach (string versionedSignature in passedSignatures)
+        if (key is null || key.Length == 0)
         {
-            var parts = versionedSignature.Split(',');
-            if (parts.Length < 2)
+            _logger.LogWarning("Webhook rejected: no signing key available for the request context.");
+            return Results.Unauthorized();
+        }
+
+        // Read request body safely without preventing downstream from reading it again.
+        var request = context.HttpContext.Request;
+        request.EnableBuffering(); // ensure the body can be read multiple times
+        request.Body.Position = 0;
+
+        string payload;
+        using (var reader = new StreamReader(request.Body, SafeUtf8Encoding, detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true))
+        {
+            payload = await reader.ReadToEndAsync(context.HttpContext.RequestAborted);
+        }
+        request.Body.Position = 0; // rewind for downstream
+
+        // Compute expected signature
+        var expectedSignature = Sign(key, msgId, timestamp.Value, payload);
+
+        // Support multiple signatures in the header, accept if any matches.
+        var versionedTokens = msgSignature.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var token in versionedTokens)
+        {
+            // Expect "v1,<base64>"
+            var parts = token.Split(',', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length != 2)
             {
-                return Results.Unauthorized();
+                // Ignore malformed token rather than failing the whole request.
+                continue;
             }
 
             var version = parts[0];
-            var passedSignature = parts[1];
-
-            if (version != "v1")
+            if (!string.Equals(version, "v1", StringComparison.Ordinal))
             {
+                continue; // ignore unknown versions
+            }
+
+            byte[] providedSigBytes;
+            try
+            {
+                providedSigBytes = Convert.FromBase64String(parts[1]);
+            }
+            catch (FormatException)
+            {
+                // Ignore invalid base64 entries
                 continue;
             }
-            ReadOnlySpan<byte> verifyBytes = Convert.FromBase64String(passedSignature);
-            if (CryptographicOperations.FixedTimeEquals(signature, verifyBytes))
+
+            if (CryptographicOperations.FixedTimeEquals(expectedSignature, providedSigBytes))
             {
                 return await next(context);
             }
         }
 
+        _logger.LogWarning("Webhook rejected: no valid signature matched for message id '{MessageId}'.", msgId);
         return Results.Unauthorized();
     }
 
     private bool VerifyTimestamp(string timestampHeader, [NotNullWhen(true)] out DateTimeOffset? timestamp)
     {
         var now = _timeProvider.GetUtcNow();
+
         try
         {
-            var timestampInt = long.Parse(timestampHeader);
+            var timestampInt = long.Parse(timestampHeader, CultureInfo.InvariantCulture);
             timestamp = DateTimeOffset.FromUnixTimeSeconds(timestampInt);
         }
         catch
@@ -98,9 +131,9 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         return true;
     }
 
-    private byte[] Sign(byte[] key, string msgId, DateTimeOffset timestamp, string payload)
+    private static byte[] Sign(byte[] key, string msgId, DateTimeOffset timestamp, string payload)
     {
-        var toSign = $"{msgId}.{timestamp.ToUnixTimeSeconds().ToString()}.{payload}";
+        var toSign = $"{msgId}.{timestamp.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)}.{payload}";
         var toSignBytes = SafeUtf8Encoding.GetBytes(toSign);
         using var hmac = new HMACSHA256(key);
         return hmac.ComputeHash(toSignBytes);
@@ -115,7 +148,7 @@ public interface IKeyRetriever
 public sealed class WebhookValidationFilterOptions
 {
     /// <summary>
-    /// 
+    /// Symmetric secret used to verify webhook signatures (implementation-specific).
     /// </summary>
-    public string Key { get; set; }
+    public string Key { get; set; } = string.Empty;
 }

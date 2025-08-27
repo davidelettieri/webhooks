@@ -22,9 +22,9 @@ public sealed class SimmetricKeyWebhookValidationFilter(
     private static readonly UTF8Encoding SafeUtf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     // Header names
-    private const string UnbrandedIdHeaderKey = "webhook-id";
-    private const string UnbrandedSignatureHeaderKey = "webhook-signature";
-    private const string UnbrandedTimestampHeaderKey = "webhook-timestamp";
+    private const string IdHeaderKey = "webhook-id";
+    private const string SignatureHeaderKey = "webhook-signature";
+    private const string TimestampHeaderKey = "webhook-timestamp";
 
     // Time window tolerance (anti-replay window)
     private const int ToleranceInSeconds = 60 * 5;
@@ -48,9 +48,9 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         // Extract and validate required headers first (cheapest checks).
         var headers = request.Headers;
 
-        string? msgId = headers.TryGetValue(UnbrandedIdHeaderKey, out var unbrandedId) ? unbrandedId.ToString() : null;
-        string? msgSignature = headers.TryGetValue(UnbrandedSignatureHeaderKey, out var signatureHeader) ? signatureHeader.ToString() : null;
-        string? msgTimestamp = headers.TryGetValue(UnbrandedTimestampHeaderKey, out var timestampHeader) ? timestampHeader.ToString() : null;
+        string? msgId = headers.TryGetValue(IdHeaderKey, out var unbrandedId) ? unbrandedId.ToString() : null;
+        string? msgSignature = headers.TryGetValue(SignatureHeaderKey, out var signatureHeader) ? signatureHeader.ToString() : null;
+        string? msgTimestamp = headers.TryGetValue(TimestampHeaderKey, out var timestampHeader) ? timestampHeader.ToString() : null;
 
         if (string.IsNullOrWhiteSpace(msgId) || string.IsNullOrWhiteSpace(msgSignature) || string.IsNullOrWhiteSpace(msgTimestamp))
         {
@@ -91,7 +91,7 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         request.Body.Position = 0;
 
         // Read body with a hard byte limit and minimal allocations.
-        byte[]? payloadBytes = null;
+        byte[]? payloadBytes;
         try
         {
             payloadBytes = await ReadBodyWithLimitAsync(request, MaxPayloadBytes, ct);
@@ -155,7 +155,7 @@ public sealed class SimmetricKeyWebhookValidationFilter(
                 continue; // avoid expensive decodes
             }
 
-            byte[]? providedSigBytes = null;
+            byte[]? providedSigBytes;
             try
             {
                 providedSigBytes = Convert.FromBase64String(b64);

@@ -211,16 +211,45 @@ public sealed class SimmetricKeyWebhookValidationFilter(
 
     private static byte[] Sign(byte[] key, string msgId, DateTimeOffset timestamp, ReadOnlySpan<byte> payloadBytes)
     {
-        // Build prefix "msgId.timestamp." as UTF-8, then stream payload bytes into the HMAC.
+        // Build prefix "msgId.timestamp." as UTF-8 and hash with the payload without extra copies.
         var prefix = $"{msgId}.{timestamp.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)}.";
-        var prefixBytes = SafeUtf8Encoding.GetBytes(prefix);
 
-        using var hmac = new HMACSHA256(key);
-        // Stream into HMAC to avoid concatenating large arrays.
-        hmac.TransformBlock(prefixBytes, 0, prefixBytes.Length, null, 0);
-        hmac.TransformFinalBlock(payloadBytes.ToArray(), 0, payloadBytes.Length);
-        // hmac.Hash is the computed tag
-        return hmac.Hash!;
+        // Encode prefix with minimal allocation: rent a small buffer when possible; otherwise allocate.
+        byte[]? rented = null;
+        byte[] prefixBytes;
+        int prefixByteCount = SafeUtf8Encoding.GetByteCount(prefix);
+        if (prefixByteCount <= 512)
+        {
+            prefixBytes = ArrayPool<byte>.Shared.Rent(prefixByteCount);
+            rented = prefixBytes;
+            prefixByteCount = SafeUtf8Encoding.GetBytes(prefix, 0, prefix.Length, prefixBytes, 0);
+        }
+        else
+        {
+            prefixBytes = SafeUtf8Encoding.GetBytes(prefix);
+        }
+
+        try
+        {
+            // Use IncrementalHash to append multiple segments without copying the payload span.
+            using var ih = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, key);
+            ih.AppendData(prefixBytes, 0, prefixByteCount);
+            ih.AppendData(payloadBytes);
+            return ih.GetHashAndReset();
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                CryptographicOperations.ZeroMemory(rented.AsSpan(0, prefixByteCount));
+                ArrayPool<byte>.Shared.Return(rented, clearArray: false);
+            }
+            else
+            {
+                // Best-effort scrub allocated prefix bytes.
+                CryptographicOperations.ZeroMemory(prefixBytes);
+            }
+        }
     }
 
     private static async Task<byte[]?> ReadBodyWithLimitAsync(HttpRequest request, int maxBytes, CancellationToken ct)

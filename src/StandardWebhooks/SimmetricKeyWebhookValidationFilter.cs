@@ -68,8 +68,13 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         }
 
         // Parse signature header (key=value CSV) and extract timestamp/signatures
-        var parsed = ParseSignatureHeader(msgSignature);
-        if (parsed.TimestampUnixSeconds is not long ts || parsed.V1Base64.Count == 0)
+        if (!TryParseSignatureHeader(msgSignature, out var parsed))
+        {
+            _logger.LogWarning("Webhook rejected: malformed signature header.");
+            return Results.Unauthorized();
+        }
+
+        if (parsed.TimestampUnixSeconds is not { } ts || parsed.V1Base64.Count == 0)
         {
             _logger.LogWarning("Webhook rejected: signature header missing required fields.");
             return Results.Unauthorized();
@@ -84,14 +89,14 @@ public sealed class SimmetricKeyWebhookValidationFilter(
 
         // Get signing key early; don't spend cycles if we cannot verify.
         var key = _keyRetriever.GetKey(context);
-        if (key is null || key.Length == 0)
+        if (key.Length == 0)
         {
             _logger.LogWarning("Webhook rejected: no signing key available.");
             return Results.Unauthorized();
         }
 
         // Short-circuit on known-too-large bodies
-        if (request.ContentLength is long contentLength && contentLength > MaxPayloadBytes)
+        if (request.ContentLength is { } contentLength and > MaxPayloadBytes)
         {
             _logger.LogWarning("Webhook rejected: payload too large. Content-Length={Length}", contentLength);
             return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
@@ -246,16 +251,21 @@ public sealed class SimmetricKeyWebhookValidationFilter(
 
     // Robust parser for the signature header using key=value CSV only.
     // Expected keys: t (unix timestamp seconds), v1 (one or more entries), k/kid (optional key id).
-    private static SignatureHeaderComponents ParseSignatureHeader(string headerValue)
+    private static bool TryParseSignatureHeader(string headerValue, out SignatureHeaderComponents result)
     {
-        var result = new SignatureHeaderComponents();
+        result = new SignatureHeaderComponents();
         if (string.IsNullOrWhiteSpace(headerValue))
         {
-            return result;
+            return false;
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var parts = headerValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length > 10)
+        {
+            return false; // cap total parts to avoid header-inflation DoS
+        }
+
         foreach (var p in parts)
         {
             var idx = p.IndexOf('=');
@@ -267,7 +277,7 @@ public sealed class SimmetricKeyWebhookValidationFilter(
             var key = p.AsSpan(0, idx).Trim().ToString();
             var value = p.AsSpan(idx + 1).Trim().ToString();
             // Trim optional quotes
-            if (value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+            if (value is ['"', _, ..] && value[^1] == '"')
             {
                 value = value.Substring(1, value.Length - 2);
             }
@@ -292,7 +302,8 @@ public sealed class SimmetricKeyWebhookValidationFilter(
             }
         }
 
-        return result;
+        // Consider parse successful if we recognized at least one known field.
+        return result.TimestampUnixSeconds.HasValue || result.V1Base64.Count > 0 || result.KeyId is not null;
     }
 
     // Accept base64url (preferred, unpadded) or standard base64; normalize and decode.

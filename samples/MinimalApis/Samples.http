@@ -1,6 +1,19 @@
-@Samples_HostAddress = http://localhost:5033
+### Compute signature on Linux:
+< {%
+    const t = $timestamp
+    const signature = crypto.hmac.sha256()
+        .withTextSecret("whsec_test_123") // get variable from http-client.private.env.json
+        .updateWithText("evt_0001." + t + "." + request.body.tryGetSubstituted())
+        .digest().toBase64();
+    request.variables.set("signature", signature)
+    request.variables.set("t", t)
+%}
 
-GET {{Samples_HostAddress}}/weatherforecast/
-Accept: application/json
+POST http://localhost:5033/webhooks/receive
+Content-Type: application/json
+webhook-id: evt_0001
+webhook-signature: t={{t}},v1={{signature}}
 
-###
+{
+  "hello": "world"
+}

@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -19,7 +20,8 @@ public sealed class SimmetricKeyWebhookValidationFilter(
     private readonly IKeyRetriever _keyRetriever = keyRetriever;
 
     // Keep a strict, safe encoding instance if ever needed for text parts
-    private static readonly UTF8Encoding SafeUtf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+    private static readonly UTF8Encoding SafeUtf8Encoding =
+        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     // Header names
     private const string IdHeaderKey = "webhook-id";
@@ -49,10 +51,11 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         var headers = request.Headers;
 
         string? msgId = headers.TryGetValue(IdHeaderKey, out var unbrandedId) ? unbrandedId.ToString() : null;
-        string? msgSignature = headers.TryGetValue(SignatureHeaderKey, out var signatureHeader) ? signatureHeader.ToString() : null;
-        string? msgTimestamp = headers.TryGetValue(TimestampHeaderKey, out var timestampHeader) ? timestampHeader.ToString() : null;
+        string? msgSignature = headers.TryGetValue(SignatureHeaderKey, out var signatureHeader)
+            ? signatureHeader.ToString()
+            : null;
 
-        if (string.IsNullOrWhiteSpace(msgId) || string.IsNullOrWhiteSpace(msgSignature) || string.IsNullOrWhiteSpace(msgTimestamp))
+        if (string.IsNullOrWhiteSpace(msgId) || string.IsNullOrWhiteSpace(msgSignature))
         {
             _logger.LogWarning("Webhook rejected: missing required headers.");
             return Results.Unauthorized();
@@ -64,7 +67,16 @@ public sealed class SimmetricKeyWebhookValidationFilter(
             return Results.Unauthorized();
         }
 
-        if (!VerifyTimestamp(msgTimestamp, out var timestamp))
+        // Parse signature header (key=value CSV) and extract timestamp/signatures
+        var parsed = ParseSignatureHeader(msgSignature);
+        if (parsed.TimestampUnixSeconds is not long ts || parsed.V1Base64.Count == 0)
+        {
+            _logger.LogWarning("Webhook rejected: signature header missing required fields.");
+            return Results.Unauthorized();
+        }
+
+        // Validate timestamp tolerance using the provided 't' value
+        if (!VerifyTimestamp(ts.ToString(CultureInfo.InvariantCulture), out var timestamp))
         {
             _logger.LogWarning("Webhook rejected: invalid or out-of-tolerance timestamp.");
             return Results.Unauthorized();
@@ -124,9 +136,8 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         // Compute expected signature over raw bytes without concatenating large strings.
         var expectedSignature = Sign(key, msgId, timestamp.Value, payloadBytes);
 
-        // Process at most a small number of tokens to avoid header inflation DoS.
-        var tokens = msgSignature.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (tokens.Length > MaxSignatureTokens)
+        // Enforce signature count cap
+        if (parsed.V1Base64.Count > MaxSignatureTokens)
         {
             _logger.LogWarning("Webhook rejected: too many signature entries.");
             CryptographicOperations.ZeroMemory(expectedSignature);
@@ -134,33 +145,14 @@ public sealed class SimmetricKeyWebhookValidationFilter(
             return Results.Unauthorized();
         }
 
-        foreach (var token in tokens)
+        foreach (var b64 in parsed.V1Base64)
         {
-            // Expect "v1,<base64>"
-            var parts = token.Split(',', 2, StringSplitOptions.TrimEntries);
-            if (parts.Length != 2)
+            if (string.IsNullOrEmpty(b64) || b64.Length > MaxBase64SignatureChars)
             {
-                continue; // ignore malformed
+                continue;
             }
 
-            var version = parts[0];
-            if (!string.Equals(version, "v1", StringComparison.Ordinal))
-            {
-                continue; // ignore unknown versions
-            }
-
-            var b64 = parts[1];
-            if (b64.Length > MaxBase64SignatureChars)
-            {
-                continue; // avoid expensive decodes
-            }
-
-            byte[]? providedSigBytes;
-            try
-            {
-                providedSigBytes = Convert.FromBase64String(b64);
-            }
-            catch (FormatException)
+            if (!TryDecodeBase64OrBase64Url(b64, out var providedSigBytes))
             {
                 continue;
             }
@@ -252,6 +244,97 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         }
     }
 
+    // Robust parser for the signature header using key=value CSV only.
+    // Expected keys: t (unix timestamp seconds), v1 (one or more entries), k/kid (optional key id).
+    private static SignatureHeaderComponents ParseSignatureHeader(string headerValue)
+    {
+        var result = new SignatureHeaderComponents();
+        if (string.IsNullOrWhiteSpace(headerValue))
+        {
+            return result;
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var parts = headerValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var p in parts)
+        {
+            var idx = p.IndexOf('=');
+            if (idx <= 0 || idx == p.Length - 1)
+            {
+                continue;
+            }
+
+            var key = p.AsSpan(0, idx).Trim().ToString();
+            var value = p.AsSpan(idx + 1).Trim().ToString();
+            // Trim optional quotes
+            if (value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+            {
+                value = value.Substring(1, value.Length - 2);
+            }
+
+            switch (key.ToLowerInvariant())
+            {
+                case "v1":
+                    if (seen.Add(value)) result.V1Base64.Add(value);
+                    break;
+                case "t":
+                    if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ts))
+                    {
+                        result.TimestampUnixSeconds = ts;
+                    }
+
+                    break;
+                case "k":
+                case "kid":
+                    result.KeyId = value;
+                    break;
+                // ignore unknown keys deliberately
+            }
+        }
+
+        return result;
+    }
+
+    // Accept base64url (preferred, unpadded) or standard base64; normalize and decode.
+    private static bool TryDecodeBase64OrBase64Url(string value, out byte[] bytes)
+    {
+        // Heuristic: base64url if it contains '-' or '_' or lacks '+' and '/'. Normalize to base64.
+        bool looksUrl = value.IndexOf('-') >= 0 || value.IndexOf('_') >= 0 ||
+                        (value.IndexOf('+') < 0 && value.IndexOf('/') < 0);
+        string normalized;
+        if (looksUrl)
+        {
+            normalized = value.Replace('-', '+').Replace('_', '/');
+            int padding = normalized.Length % 4;
+            if (padding != 0)
+            {
+                normalized = normalized.PadRight(normalized.Length + (4 - padding), '=');
+            }
+        }
+        else
+        {
+            normalized = value;
+        }
+
+        try
+        {
+            bytes = Convert.FromBase64String(normalized);
+            return true;
+        }
+        catch
+        {
+            bytes = Array.Empty<byte>();
+            return false;
+        }
+    }
+
+    private sealed class SignatureHeaderComponents
+    {
+        public List<string> V1Base64 { get; } = new List<string>(capacity: 2);
+        public long? TimestampUnixSeconds { get; set; }
+        public string? KeyId { get; set; }
+    }
+
     private static async Task<byte[]?> ReadBodyWithLimitAsync(HttpRequest request, int maxBytes, CancellationToken ct)
     {
         // Fast-path: empty body
@@ -269,7 +352,8 @@ public sealed class SimmetricKeyWebhookValidationFilter(
             while (true)
             {
                 ct.ThrowIfCancellationRequested();
-                int read = await request.Body.ReadAsync(rented.AsMemory(0, Math.Min(rented.Length, maxBytes - total)), ct);
+                int read = await request.Body.ReadAsync(rented.AsMemory(0, Math.Min(rented.Length, maxBytes - total)),
+                    ct);
                 if (read == 0)
                 {
                     break;

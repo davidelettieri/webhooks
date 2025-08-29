@@ -1,6 +1,4 @@
-using System.Text;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -29,9 +27,7 @@ internal static class TestHelpers
 
     public static EndpointFilterInvocationContext CreateInvocationContext(HttpContext httpContext)
     {
-        // Minimal context with route data, not used by filter logic
-        var routeData = new RouteData();
-        return new DefaultEndpointFilterInvocationContext(httpContext, routeData, new List<object?>());
+        return new DefaultEndpointFilterInvocationContext(httpContext, new List<object?>());
     }
 
     public static ILogger<SymmetricKeyWebhookValidationFilter> NullLogger() =>
@@ -52,12 +48,9 @@ internal sealed class FixedKeyRetriever(byte[] key) : IKeyRetriever
 
 internal sealed class DefaultEndpointFilterInvocationContext(
     HttpContext httpContext,
-    RouteData _,
     IReadOnlyList<object?> arguments)
     : EndpointFilterInvocationContext
 {
-    public object? FindArgument(Type type) => arguments.FirstOrDefault(a => a?.GetType() == type);
-
     public override T GetArgument<T>(int index)
     {
         throw new NotImplementedException();

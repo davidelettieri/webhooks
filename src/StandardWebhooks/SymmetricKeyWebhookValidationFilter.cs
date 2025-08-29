@@ -385,16 +385,3 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         }
     }
 }
-
-public interface IKeyRetriever
-{
-    byte[] GetKey(EndpointFilterInvocationContext context);
-}
-
-public sealed class WebhookValidationFilterOptions
-{
-    /// <summary>
-    /// Symmetric secret used to verify webhook signatures (implementation-specific).
-    /// </summary>
-    public string Key { get; set; } = string.Empty;
-}

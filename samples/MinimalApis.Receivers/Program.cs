@@ -18,10 +18,11 @@ var webhooks = app.MapGroup("/webhooks")
     .AddEndpointFilter<SymmetricKeyWebhookValidationFilter>();
 
 // Sample webhook endpoint
-webhooks.MapPost("/receive", async (HttpRequest req) =>
+webhooks.MapPost("/receive", async (HttpRequest req, ILogger<SymmetricKeyWebhookValidationFilter> logger) =>
 {
     using var reader = new StreamReader(req.Body);
     var body = await reader.ReadToEndAsync();
+    logger.LogInformation(body);
     return Results.Ok(new { received = true, length = body.Length, body });
 });
 

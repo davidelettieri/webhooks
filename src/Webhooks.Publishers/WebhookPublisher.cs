@@ -9,7 +9,10 @@ namespace Webhooks.Publishers;
 /// <summary>
 /// Publishes webhooks that are verifiable by receivers.
 /// </summary>
-public sealed class WebhookPublisher(HttpClient httpClient, TimeProvider timeProvider, IPublisherKeyRetriever publisherKeyRetriever)
+public sealed class WebhookPublisher(
+    HttpClient httpClient,
+    TimeProvider timeProvider,
+    IPublisherKeyRetriever publisherKeyRetriever) : IWebhookPublisher
 {
     private static readonly UTF8Encoding SafeUtf8Encoding =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
@@ -17,7 +20,8 @@ public sealed class WebhookPublisher(HttpClient httpClient, TimeProvider timePro
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
     private readonly IPublisherKeyRetriever
-        _publisherKeyRetriever = publisherKeyRetriever ?? throw new ArgumentNullException(nameof(publisherKeyRetriever));
+        _publisherKeyRetriever =
+            publisherKeyRetriever ?? throw new ArgumentNullException(nameof(publisherKeyRetriever));
 
     private readonly EndpointFilterInvocationContext _keyContext = new PublisherEndpointFilterInvocationContext();
 
@@ -45,7 +49,7 @@ public sealed class WebhookPublisher(HttpClient httpClient, TimeProvider timePro
     /// <summary>
     /// Creates an HttpRequestMessage with proper headers and body.
     /// </summary>
-    public HttpRequestMessage CreateRequest(Uri endpoint, string messageId, ReadOnlyMemory<byte> payload,
+    internal HttpRequestMessage CreateRequest(Uri endpoint, string messageId, ReadOnlyMemory<byte> payload,
         string contentType = "application/json")
     {
         if (endpoint is null) throw new ArgumentNullException(nameof(endpoint));

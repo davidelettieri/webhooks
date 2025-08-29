@@ -10,11 +10,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Tests", "tests\Webhooks.Tests\Webhooks.Tests.csproj", "{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalApis", "samples\MinimalApis\MinimalApis.csproj", "{0BA65BAA-0CCB-E973-B8C4-73DF93873427}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalApis.Receivers", "samples\MinimalApis.Receivers\MinimalApis.Receivers.csproj", "{0BA65BAA-0CCB-E973-B8C4-73DF93873427}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Receivers", "src\Webhooks.Receivers\Webhooks.Receivers.csproj", "{D2F34136-56F4-4EF8-A1B7-8B3232656C8B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Publishers", "src\Webhooks.Publishers\Webhooks.Publishers.csproj", "{BDE1ED6A-3581-487F-8EA5-83F732217691}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerService.Publisher", "samples\WorkerService.Publisher\WorkerService.Publisher.csproj", "{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +40,10 @@ Global
 		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Release|Any CPU.Build.0 = Release|Any CPU
+		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -47,6 +53,7 @@ Global
 		{0BA65BAA-0CCB-E973-B8C4-73DF93873427} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{BDE1ED6A-3581-487F-8EA5-83F732217691} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A745D0CD-D6A8-475E-80E1-F71FD0944FA1}

@@ -6,7 +6,7 @@ namespace StandardWebhooks;
 
 public sealed class OptionsKeyRetriever(IOptions<WebhookValidationFilterOptions> options) : IKeyRetriever
 {
-    private readonly byte[] _keyBytes = Encoding.UTF8.GetBytes(options.Value.Key ?? string.Empty);
+    private readonly byte[] _keyBytes = Encoding.UTF8.GetBytes(options.Value.Key);
 
     // Interpret the configured key as UTF-8 bytes.
     // Change to Base64/Hex decode if your key is encoded.

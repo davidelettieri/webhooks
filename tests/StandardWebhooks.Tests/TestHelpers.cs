@@ -34,8 +34,8 @@ internal static class TestHelpers
         return new DefaultEndpointFilterInvocationContext(httpContext, routeData, new List<object?>());
     }
 
-    public static ILogger<SimmetricKeyWebhookValidationFilter> NullLogger() =>
-        new NullLogger<SimmetricKeyWebhookValidationFilter>();
+    public static ILogger<SymmetricKeyWebhookValidationFilter> NullLogger() =>
+        new NullLogger<SymmetricKeyWebhookValidationFilter>();
 }
 
 internal sealed class StaticTimeProvider(long unixSeconds) : TimeProvider

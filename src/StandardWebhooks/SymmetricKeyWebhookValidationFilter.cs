@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -9,24 +8,23 @@ using Microsoft.Extensions.Logging;
 
 namespace StandardWebhooks;
 
-public sealed class SimmetricKeyWebhookValidationFilter(
-    ILogger<SimmetricKeyWebhookValidationFilter> logger,
+public sealed class SymmetricKeyWebhookValidationFilter(
+    ILogger<SymmetricKeyWebhookValidationFilter> logger,
     TimeProvider timeProvider,
     IKeyRetriever keyRetriever)
     : IEndpointFilter
 {
-    private readonly ILogger<SimmetricKeyWebhookValidationFilter> _logger = logger;
+    private readonly ILogger<SymmetricKeyWebhookValidationFilter> _logger = logger;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly IKeyRetriever _keyRetriever = keyRetriever;
 
     // Keep a strict, safe encoding instance if ever needed for text parts
     private static readonly UTF8Encoding SafeUtf8Encoding =
-        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+        new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     // Header names
     private const string IdHeaderKey = "webhook-id";
     private const string SignatureHeaderKey = "webhook-signature";
-    private const string TimestampHeaderKey = "webhook-timestamp";
 
     // Time window tolerance (anti-replay window)
     private const int ToleranceInSeconds = 60 * 5;
@@ -334,14 +332,14 @@ public sealed class SimmetricKeyWebhookValidationFilter(
         }
         catch
         {
-            bytes = Array.Empty<byte>();
+            bytes = [];
             return false;
         }
     }
 
     private sealed class SignatureHeaderComponents
     {
-        public List<string> V1Base64 { get; } = new List<string>(capacity: 2);
+        public List<string> V1Base64 { get; } = new(capacity: 2);
         public long? TimestampUnixSeconds { get; set; }
         public string? KeyId { get; set; }
     }
@@ -349,9 +347,9 @@ public sealed class SimmetricKeyWebhookValidationFilter(
     private static async Task<byte[]?> ReadBodyWithLimitAsync(HttpRequest request, int maxBytes, CancellationToken ct)
     {
         // Fast-path: empty body
-        if (request.ContentLength is long len && len == 0)
+        if (request.ContentLength is 0)
         {
-            return Array.Empty<byte>();
+            return [];
         }
 
         var rented = ArrayPool<byte>.Shared.Rent(16 * 1024);

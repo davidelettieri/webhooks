@@ -7,7 +7,7 @@ using Xunit;
 
 namespace StandardWebhooks.Tests;
 
-public class SimmetricKeyWebhookValidationFilterTests
+public class SymmetricKeyWebhookValidationFilterTests
 {
     private static byte[] Sign(byte[] key, string id, long t, byte[] body)
     {
@@ -44,7 +44,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
 
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var inv = TestHelpers.CreateInvocationContext(ctx);
         var res = await filter.InvokeAsync(inv, NextPass);
@@ -65,7 +65,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
 
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var inv = TestHelpers.CreateInvocationContext(ctx);
         var res = await filter.InvokeAsync(inv, NextPass);
@@ -78,7 +78,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         var t = 1_700_000_000L;
         var ctx = TestHelpers.CreateHttpContext(body: Encoding.UTF8.GetBytes("{}"));
         // Missing id and signature
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(Encoding.UTF8.GetBytes("k")));
         var inv = TestHelpers.CreateInvocationContext(ctx);
         var res = await filter.InvokeAsync(inv, NextPass);
@@ -93,7 +93,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         var ctx = TestHelpers.CreateHttpContext(body: Encoding.UTF8.GetBytes("{}"));
         ctx.Request.Headers["webhook-id"] = "evt";
         ctx.Request.Headers["webhook-signature"] = "v1=abc"; // missing t
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var inv = TestHelpers.CreateInvocationContext(ctx);
         var res = await filter.InvokeAsync(inv, NextPass);
@@ -119,7 +119,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={within}, v1={B64Url(tag)}";
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(now),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(now),
             new FixedKeyRetriever(key));
         var res = await filter.InvokeAsync(TestHelpers.CreateInvocationContext(ctx), NextPass);
         Assert.IsType<Ok<string>>(res);
@@ -146,7 +146,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = sig;
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var res = await filter.InvokeAsync(TestHelpers.CreateInvocationContext(ctx), NextPass);
         Assert.IsType<UnauthorizedHttpResult>(res);
@@ -163,7 +163,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={wrong}";
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var res = await filter.InvokeAsync(TestHelpers.CreateInvocationContext(ctx), NextPass);
         Assert.IsType<UnauthorizedHttpResult>(res);
@@ -180,7 +180,7 @@ public class SimmetricKeyWebhookValidationFilterTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={tag}";
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var res = await filter.InvokeAsync(TestHelpers.CreateInvocationContext(ctx), NextPass);
         Assert.IsType<StatusCodeHttpResult>(res);
@@ -202,7 +202,7 @@ public class SimmetricKeyWebhookValidationFilterTests
 
         // Cancel before read
         cts.Cancel();
-        var filter = new SimmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var filter = new SymmetricKeyWebhookValidationFilter(TestHelpers.NullLogger(), new StaticTimeProvider(t),
             new FixedKeyRetriever(key));
         var res = await filter.InvokeAsync(TestHelpers.CreateInvocationContext(ctx), NextPass);
         Assert.IsType<StatusCodeHttpResult>(res);

@@ -8,11 +8,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardWebhooks", "src\StandardWebhooks\StandardWebhooks.csproj", "{9E4A66EC-7620-5B41-8684-7284C78EAC66}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardWebhooks.Tests", "tests\StandardWebhooks.Tests\StandardWebhooks.Tests.csproj", "{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Tests", "tests\Webhooks.Tests\Webhooks.Tests.csproj", "{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalApis", "samples\MinimalApis\MinimalApis.csproj", "{0BA65BAA-0CCB-E973-B8C4-73DF93873427}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Receivers", "src\Webhooks.Receivers\Webhooks.Receivers.csproj", "{D2F34136-56F4-4EF8-A1B7-8B3232656C8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Publishers", "src\Webhooks.Publishers\Webhooks.Publishers.csproj", "{BDE1ED6A-3581-487F-8EA5-83F732217691}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,10 +22,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9E4A66EC-7620-5B41-8684-7284C78EAC66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E4A66EC-7620-5B41-8684-7284C78EAC66}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E4A66EC-7620-5B41-8684-7284C78EAC66}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E4A66EC-7620-5B41-8684-7284C78EAC66}.Release|Any CPU.Build.0 = Release|Any CPU
 		{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -32,14 +30,23 @@ Global
 		{0BA65BAA-0CCB-E973-B8C4-73DF93873427}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BA65BAA-0CCB-E973-B8C4-73DF93873427}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BA65BAA-0CCB-E973-B8C4-73DF93873427}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDE1ED6A-3581-487F-8EA5-83F732217691}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{9E4A66EC-7620-5B41-8684-7284C78EAC66} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{59F2FD30-765E-ABFE-A6BE-B6AB0B2FBE97} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{0BA65BAA-0CCB-E973-B8C4-73DF93873427} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{BDE1ED6A-3581-487F-8EA5-83F732217691} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A745D0CD-D6A8-475E-80E1-F71FD0944FA1}

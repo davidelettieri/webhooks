@@ -4,20 +4,20 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 
-namespace StandardWebhooks;
+namespace Webhooks.Publishers;
 
 /// <summary>
-/// Publishes webhooks that are verifiable by <see cref="SymmetricKeyWebhookValidationFilter"/>.
+/// Publishes webhooks that are verifiable by receivers.
 /// </summary>
-public sealed class WebhookPublisher(HttpClient httpClient, TimeProvider timeProvider, IKeyRetriever keyRetriever)
+public sealed class WebhookPublisher(HttpClient httpClient, TimeProvider timeProvider, IPublisherKeyRetriever publisherKeyRetriever)
 {
     private static readonly UTF8Encoding SafeUtf8Encoding =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
-    private readonly IKeyRetriever
-        _keyRetriever = keyRetriever ?? throw new ArgumentNullException(nameof(keyRetriever));
+    private readonly IPublisherKeyRetriever
+        _publisherKeyRetriever = publisherKeyRetriever ?? throw new ArgumentNullException(nameof(publisherKeyRetriever));
 
     private readonly EndpointFilterInvocationContext _keyContext = new PublisherEndpointFilterInvocationContext();
 
@@ -29,7 +29,7 @@ public sealed class WebhookPublisher(HttpClient httpClient, TimeProvider timePro
         if (string.IsNullOrWhiteSpace(messageId)) throw new ArgumentException("messageId required", nameof(messageId));
         if (messageId.Length > 256) throw new ArgumentException("messageId too long (max 256)", nameof(messageId));
 
-        var key = _keyRetriever.GetKey(_keyContext);
+        var key = _publisherKeyRetriever.GetKey();
         var tag = ComputeTag(key, messageId, timestamp, payload);
         try
         {

@@ -6,17 +6,17 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace StandardWebhooks;
+namespace Webhooks.Receivers;
 
 public sealed class SymmetricKeyWebhookValidationFilter(
     ILogger<SymmetricKeyWebhookValidationFilter> logger,
     TimeProvider timeProvider,
-    IKeyRetriever keyRetriever)
+    IValidationFilterKeyRetriever validationFilterKeyRetriever)
     : IEndpointFilter
 {
     private readonly ILogger<SymmetricKeyWebhookValidationFilter> _logger = logger;
     private readonly TimeProvider _timeProvider = timeProvider;
-    private readonly IKeyRetriever _keyRetriever = keyRetriever;
+    private readonly IValidationFilterKeyRetriever _validationFilterKeyRetriever = validationFilterKeyRetriever;
 
     // Keep a strict, safe encoding instance if ever needed for text parts
     private static readonly UTF8Encoding SafeUtf8Encoding =
@@ -86,7 +86,7 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         }
 
         // Get signing key early; don't spend cycles if we cannot verify.
-        var key = _keyRetriever.GetKey(context);
+        var key = _validationFilterKeyRetriever.GetKey(context);
         if (key.Length == 0)
         {
             _logger.LogWarning("Webhook rejected: no signing key available.");

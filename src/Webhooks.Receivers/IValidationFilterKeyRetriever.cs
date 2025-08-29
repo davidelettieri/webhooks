@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
 
-namespace StandardWebhooks;
+namespace Webhooks.Receivers;
 
-public interface IKeyRetriever
+public interface IValidationFilterKeyRetriever
 {
     byte[] GetKey(EndpointFilterInvocationContext context);
 }

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Webhooks.Publishers;
+using Webhooks.Receivers;
 
 namespace StandardWebhooks.Tests;
 
@@ -40,10 +42,12 @@ internal sealed class StaticTimeProvider(long unixSeconds) : TimeProvider
     public override DateTimeOffset GetUtcNow() => _now;
 }
 
-internal sealed class FixedKeyRetriever(byte[] key) : IKeyRetriever
+internal sealed class FixedValidationFilterKeyRetriever(byte[] key)
+    : IValidationFilterKeyRetriever, IPublisherKeyRetriever
 {
     private readonly byte[] _key = key;
     public byte[] GetKey(EndpointFilterInvocationContext context) => _key;
+    public byte[] GetKey() => _key;
 }
 
 internal sealed class DefaultEndpointFilterInvocationContext(

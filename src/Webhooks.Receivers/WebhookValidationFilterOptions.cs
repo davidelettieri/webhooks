@@ -1,4 +1,4 @@
-namespace StandardWebhooks;
+namespace Webhooks.Receivers;
 
 public sealed class WebhookValidationFilterOptions
 {

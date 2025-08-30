@@ -5,18 +5,18 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Webhooks.Receivers;
 
-namespace Webhooks.Receivers;
-
-public sealed class SymmetricKeyWebhookValidationFilter(
-    ILogger<SymmetricKeyWebhookValidationFilter> logger,
+public class SymmetricKeyWebhookValidationMiddleware(
+    ILogger<SymmetricKeyWebhookValidationMiddleware> logger,
     TimeProvider timeProvider,
-    IValidationFilterKeyRetriever validationFilterKeyRetriever)
-    : IEndpointFilter
+    IValidationWebhookKeyRetriever keyRetriever,
+    RequestDelegate next)
 {
-    private readonly ILogger<SymmetricKeyWebhookValidationFilter> _logger = logger;
+    private readonly ILogger<SymmetricKeyWebhookValidationMiddleware> _logger = logger;
     private readonly TimeProvider _timeProvider = timeProvider;
-    private readonly IValidationFilterKeyRetriever _validationFilterKeyRetriever = validationFilterKeyRetriever;
+    private readonly IValidationWebhookKeyRetriever _keyRetriever = keyRetriever;
+    private readonly RequestDelegate _next = next;
 
     // Keep a strict, safe encoding instance if ever needed for text parts
     private static readonly UTF8Encoding SafeUtf8Encoding =
@@ -39,11 +39,10 @@ public sealed class SymmetricKeyWebhookValidationFilter(
     // Reasonable cap on msgId length to avoid pathological header values
     private const int MaxMessageIdChars = 256;
 
-    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    public async Task InvokeAsync(HttpContext context)
     {
-        var httpContext = context.HttpContext;
-        var request = httpContext.Request;
-        var ct = httpContext.RequestAborted;
+        var request = context.Request;
+        var ct = context.RequestAborted;
 
         // Extract and validate required headers first (cheapest checks).
         var headers = request.Headers;
@@ -56,48 +55,56 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         if (string.IsNullOrWhiteSpace(msgId) || string.IsNullOrWhiteSpace(msgSignature))
         {
             _logger.LogWarning("Webhook rejected: missing required headers.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         if (msgId.Length > MaxMessageIdChars)
         {
             _logger.LogWarning("Webhook rejected: message id too large.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         // Parse signature header (key=value CSV) and extract timestamp/signatures
         if (!TryParseSignatureHeader(msgSignature, out var parsed))
         {
             _logger.LogWarning("Webhook rejected: malformed signature header.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         if (parsed.TimestampUnixSeconds is not { } ts || parsed.V1Base64.Count == 0)
         {
             _logger.LogWarning("Webhook rejected: signature header missing required fields.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         // Validate timestamp tolerance using the provided 't' value
         if (!VerifyTimestamp(ts.ToString(CultureInfo.InvariantCulture), out var timestamp))
         {
             _logger.LogWarning("Webhook rejected: invalid or out-of-tolerance timestamp.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         // Get signing key early; don't spend cycles if we cannot verify.
-        var key = _validationFilterKeyRetriever.GetKey(context);
+        var key = _keyRetriever.GetKey(context);
         if (key.Length == 0)
         {
             _logger.LogWarning("Webhook rejected: no signing key available.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         // Short-circuit on known-too-large bodies
-        if (request.ContentLength is { } contentLength and > MaxPayloadBytes)
+        if (request.ContentLength is {
+            } contentLength and > MaxPayloadBytes)
         {
             _logger.LogWarning("Webhook rejected: payload too large. Content-Length={Length}", contentLength);
-            return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         // Enable buffering with a strict upper limit to prevent unbounded memory usage.
@@ -108,29 +115,35 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         // Read body with a hard byte limit and minimal allocations.
         byte[]? payloadBytes;
         try
+
         {
             payloadBytes = await ReadBodyWithLimitAsync(request, MaxPayloadBytes, ct);
         }
-        catch (OperationCanceledException)
+        catch
+            (OperationCanceledException)
         {
-            return Results.StatusCode(StatusCodes.Status499ClientClosedRequest);
+            context.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+            return;
         }
         catch (IOException)
         {
             // Likely due to max buffer exceeded in server buffering layer.
             _logger.LogWarning("Webhook rejected: payload exceeded buffering limits.");
-            return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+            context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            return;
         }
         catch
         {
             _logger.LogWarning("Webhook rejected: failed to read request body.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         if (payloadBytes is null || payloadBytes.Length == 0)
         {
             _logger.LogWarning("Webhook rejected: payload missing or too large.");
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         // Rewind body for downstream consumers.
@@ -145,7 +158,8 @@ public sealed class SymmetricKeyWebhookValidationFilter(
             _logger.LogWarning("Webhook rejected: too many signature entries.");
             CryptographicOperations.ZeroMemory(expectedSignature);
             Array.Clear(payloadBytes, 0, payloadBytes.Length);
-            return Results.Unauthorized();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         foreach (var b64 in parsed.V1Base64)
@@ -170,15 +184,15 @@ public sealed class SymmetricKeyWebhookValidationFilter(
                 // Best-effort scrub before continuing.
                 CryptographicOperations.ZeroMemory(expectedSignature);
                 Array.Clear(payloadBytes, 0, payloadBytes.Length);
-                context.Arguments.Add(new WebhookHeader(msgId, timestamp.Value));
-                return await next(context);
+                context.Items.Add(new("webhook_header", new WebhookHeader(msgId, timestamp.Value)));
+                await _next(context);
             }
         }
 
         _logger.LogWarning("Webhook rejected: signature validation failed.");
         CryptographicOperations.ZeroMemory(expectedSignature);
         Array.Clear(payloadBytes, 0, payloadBytes.Length);
-        return Results.Unauthorized();
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
     }
 
     private bool VerifyTimestamp(string timestampHeader, [NotNullWhen(true)] out DateTimeOffset? timestamp)
@@ -248,8 +262,8 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         }
     }
 
-    // Robust parser for the signature header using key=value CSV only.
-    // Expected keys: t (unix timestamp seconds), v1 (one or more entries), k/kid (optional key id).
+// Robust parser for the signature header using key=value CSV only.
+// Expected keys: t (unix timestamp seconds), v1 (one or more entries), k/kid (optional key id).
     private static bool TryParseSignatureHeader(string headerValue, out SignatureHeaderComponents result)
     {
         result = new SignatureHeaderComponents();
@@ -305,7 +319,7 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         return result.TimestampUnixSeconds.HasValue || result.V1Base64.Count > 0 || result.KeyId is not null;
     }
 
-    // Accept base64url (preferred, unpadded) or standard base64; normalize and decode.
+// Accept base64url (preferred, unpadded) or standard base64; normalize and decode.
     private static bool TryDecodeBase64OrBase64Url(string value, out byte[] bytes)
     {
         // Heuristic: base64url if it contains '-' or '_' or lacks '+' and '/'. Normalize to base64.
@@ -386,5 +400,3 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         }
     }
 }
-
-public sealed record WebhookHeader(string Id, DateTimeOffset ReceivedAt);

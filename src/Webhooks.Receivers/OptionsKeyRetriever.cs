@@ -4,10 +4,10 @@ using Microsoft.Extensions.Options;
 
 namespace Webhooks.Receivers;
 
-public sealed class OptionsKeyRetriever(IOptions<WebhookValidationFilterOptions> options) : IValidationFilterKeyRetriever
+public sealed class OptionsKeyRetriever(IOptions<WebhookValidationFilterOptions> options) : IValidationWebhookKeyRetriever
 {
     private readonly byte[] _keyBytes = Encoding.UTF8.GetBytes(options.Value.Key);
 
     // Interpret the configured key as UTF-8 bytes.
-    public byte[] GetKey(EndpointFilterInvocationContext context) => _keyBytes;
+    public byte[] GetKey(HttpContext context) => _keyBytes;
 }

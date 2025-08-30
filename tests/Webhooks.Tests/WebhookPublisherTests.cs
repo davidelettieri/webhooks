@@ -14,7 +14,7 @@ public class WebhookPublisherTests
     {
         var key = "publishersecretkey000000000000000"u8.ToArray();
         var publisher = new WebhookPublisher(new HttpClient(new SocketsHttpHandler()),
-            new StaticTimeProvider(1_700_000_000), new FixedValidationFilterKeyRetriever(key));
+            new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key));
 
         var payload = "{\"n\":42}"u8.ToArray();
         var msgId = "evt_pub_1";
@@ -25,7 +25,7 @@ public class WebhookPublisherTests
         ctx.Request.Headers["webhook-signature"] = req.Headers.GetValues("webhook-signature").First();
 
         var filter = new SymmetricKeyWebhookValidationFilter(new NullLogger<SymmetricKeyWebhookValidationFilter>(),
-            new StaticTimeProvider(1_700_000_000), new FixedValidationFilterKeyRetriever(key));
+            new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key));
         var inv = TestHelpers.CreateInvocationContext(ctx);
         var res = await filter.InvokeAsync(inv, _ => ValueTask.FromResult<object?>(Results.Ok()));
         Assert.IsType<Ok>(res);

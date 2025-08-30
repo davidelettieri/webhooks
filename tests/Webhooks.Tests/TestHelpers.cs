@@ -32,8 +32,8 @@ internal static class TestHelpers
         return new DefaultEndpointFilterInvocationContext(httpContext, new List<object?>());
     }
 
-    public static ILogger<SymmetricKeyWebhookValidationFilter> NullLogger() =>
-        new NullLogger<SymmetricKeyWebhookValidationFilter>();
+    public static ILogger<SymmetricKeyWebhookValidationMiddleware> NullLogger() =>
+        new NullLogger<SymmetricKeyWebhookValidationMiddleware>();
 }
 
 internal sealed class StaticTimeProvider(long unixSeconds) : TimeProvider
@@ -42,11 +42,11 @@ internal sealed class StaticTimeProvider(long unixSeconds) : TimeProvider
     public override DateTimeOffset GetUtcNow() => _now;
 }
 
-internal sealed class FixedValidationFilterKeyRetriever(byte[] key)
-    : IValidationFilterKeyRetriever, IPublisherKeyRetriever
+internal sealed class FixedValidationWebhookKeyRetriever(byte[] key)
+    : IValidationWebhookKeyRetriever, IPublisherKeyRetriever
 {
     private readonly byte[] _key = key;
-    public byte[] GetKey(EndpointFilterInvocationContext context) => _key;
+    public byte[] GetKey(HttpContext context) => _key;
     public byte[] GetKey() => _key;
 }
 

@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging.Abstractions;
+using System.Net;
+using Microsoft.AspNetCore.TestHost;
 using Webhooks.Receivers;
 using Webhooks.Tests.Common;
 
@@ -7,31 +7,45 @@ namespace Webhooks.Publishers.Tests;
 
 public class WebhookPublisherTests
 {
+    private static readonly byte[] DefaultKey = "publishersecretkey000000000000000"u8.ToArray();
+
     [Fact]
     public async Task Publisher_Headers_Validate_In_Middleware()
     {
         const long t = 1700000000;
-        var key = "publishersecretkey000000000000000"u8.ToArray();
-        var publisher = new WebhookPublisher(new HttpClient(new SocketsHttpHandler()),
-            new StaticTimeProvider(t), new FixedValidationWebhookKeyRetriever(key));
+        var server = CreateServer(t);
+        var httpClient = server.CreateClient();
+        var publisher = new WebhookPublisher(httpClient,
+            new StaticTimeProvider(t), new FixedValidationWebhookKeyRetriever(DefaultKey));
 
         var payload = "{\"n\":42}"u8.ToArray();
         var msgId = "evt_pub_1";
-        var req = publisher.CreateRequest(new Uri("https://example.test/hook"), msgId, payload);
+        var response = await publisher.PublishAsync(httpClient.BaseAddress!, msgId, payload);
 
-        var ctx = TestHelpers.CreateHttpContext(body: payload);
-        ctx.Request.Headers["webhook-id"] = req.Headers.GetValues("webhook-id").First();
-        ctx.Request.Headers["webhook-signature"] = req.Headers.GetValues("webhook-signature").First();
-        ctx.Request.Headers["webhook-timestamp"] = req.Headers.GetValues("webhook-timestamp").First();
-        var mw = new SymmetricKeyWebhookValidationMiddleware(new NullLogger<SymmetricKeyWebhookValidationMiddleware>(),
-            new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key),
-            _ =>
+        Assert.Equal(StatusCodes.Status204NoContent, (int)response.StatusCode);
+    }
+
+    private static TestServer CreateServer(long timestamp)
+    {
+        var builder = new WebHostBuilder()
+            .Configure(app =>
             {
-                ctx.Response.StatusCode = StatusCodes.Status200OK;
-                return Task.CompletedTask;
+                app.UseMiddleware<SymmetricKeyWebhookValidationMiddleware>();
+                app.Run(context =>
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.NoContent;
+                    return Task.CompletedTask;
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                // Dependencies required by the filter
+                services.AddSingleton<TimeProvider>(new StaticTimeProvider(timestamp));
+                services.AddSingleton<IValidationWebhookKeyRetriever>(
+                    new FixedValidationWebhookKeyRetriever(DefaultKey));
             });
-        await mw.InvokeAsync(ctx);
-        Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
+
+        return new TestServer(builder);
     }
 }
 

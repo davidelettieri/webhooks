@@ -34,7 +34,7 @@ public sealed class WebhookPublisher(
         try
         {
             var sig = WebEncoders.Base64UrlEncode(tag);
-            return $"t={timestamp.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)}, v1={sig}";
+            return $"v1={sig}";
         }
         finally
         {
@@ -45,7 +45,7 @@ public sealed class WebhookPublisher(
     /// <summary>
     /// Creates an HttpRequestMessage with proper headers and body.
     /// </summary>
-    internal HttpRequestMessage CreateRequest(Uri endpoint, string messageId, ReadOnlyMemory<byte> payload,
+    private HttpRequestMessage CreateRequest(Uri endpoint, string messageId, ReadOnlyMemory<byte> payload,
         string contentType = "application/json")
     {
         if (endpoint is null) throw new ArgumentNullException(nameof(endpoint));

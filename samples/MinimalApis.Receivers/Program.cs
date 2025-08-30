@@ -36,7 +36,7 @@ webhooks.MapPost("/receive",
     async (
         HttpContext context,
         IWebhookPayloadStore store,
-        ILogger<Samples.Program> logger,
+        ILogger<Program> logger,
         CancellationToken cancellationToken) =>
 
     {
@@ -57,8 +57,3 @@ webhooks.MapPost("/receive",
 app.MapGet("/", () => "Running!");
 
 app.Run();
-
-namespace Samples
-{
-    public partial class Program;
-}

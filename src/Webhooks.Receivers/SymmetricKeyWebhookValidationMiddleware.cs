@@ -184,7 +184,7 @@ public class SymmetricKeyWebhookValidationMiddleware(
                 // Best-effort scrub before continuing.
                 CryptographicOperations.ZeroMemory(expectedSignature);
                 Array.Clear(payloadBytes, 0, payloadBytes.Length);
-                context.Items["webhook_header"] = new WebhookHeader(msgId, timestamp.Value);
+                context.SetWebhookHeader(new WebhookHeader(msgId, timestamp.Value));
                 await _next(context);
                 return;
             }

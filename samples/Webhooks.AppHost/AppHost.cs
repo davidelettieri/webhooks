@@ -4,7 +4,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 var cosmos = builder.AddAzureCosmosDB("cosmos-db").RunAsPreviewEmulator(emulator => { emulator.WithDataExplorer(); });
 #pragma warning restore ASPIRECOSMOSDB001
 
-var db = cosmos.AddCosmosDatabase("webhooks-db");
+var db = cosmos.AddCosmosDatabase("webhooks");
 db.AddContainer("payloads", "/id");
 
 var receiver = builder

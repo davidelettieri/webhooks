@@ -1,5 +1,7 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using System.Text.Json.Serialization;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using WebHooks.Receivers.Storage;
 
 namespace Webhooks.Receivers.Storage.CosmosDb;
@@ -29,7 +31,7 @@ public sealed class CosmosDbWebhookPayloadStore(
 
     private sealed class WebhookPayloadDocument
     {
-        public string Id { get; init; } = null!;
+        [JsonProperty("id")] public string Id { get; init; } = null!;
         public string Payload { get; init; } = null!;
         public DateTimeOffset ReceivedAt { get; init; } = DateTimeOffset.UtcNow;
     }

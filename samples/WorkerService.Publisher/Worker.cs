@@ -12,7 +12,6 @@ public class Worker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Thread.Sleep(5000); // Wait for the receiver to start.
         while (true)
         {
             while (!stoppingToken.IsCancellationRequested)

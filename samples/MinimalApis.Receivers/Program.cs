@@ -34,16 +34,22 @@ var webhooks = app.MapGroup("/webhooks");
 // Sample webhook endpoint
 webhooks.MapPost("/receive",
     async (
-        HttpRequest req,
-        WebhookHeader header,
+        HttpContext context,
         IWebhookPayloadStore store,
         ILogger<Samples.Program> logger,
         CancellationToken cancellationToken) =>
 
     {
-        using var reader = new StreamReader(req.Body);
+        using var reader = new StreamReader(context.Request.Body);
         var body = await reader.ReadToEndAsync(cancellationToken);
         logger.LogInformation(body);
+        var header = context.GetWebhookHeader();
+
+        if (header == null)
+        {
+            return Results.BadRequest(new { error = "Could not parse webhook." });
+        }
+
         await store.StorePayloadAsync(header.Id, header.Timestamp, body, cancellationToken);
         return Results.Ok(new { received = true, length = body.Length, body });
     });

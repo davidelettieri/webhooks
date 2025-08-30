@@ -1,15 +1,11 @@
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.Azure.Cosmos;
-using System.Net;
 using Testcontainers.CosmosDb;
 
 namespace Webhooks.Receivers.Storage.CosmosDb.Tests;
 
 public sealed class CosmosEmulatorFixture : IAsyncLifetime
 {
-    private IContainer? _container;
-
+    private CosmosDbContainer? _container;
     public string Endpoint { get; private set; } = string.Empty;
 
     // Well-known emulator master key.
@@ -20,25 +16,24 @@ public sealed class CosmosEmulatorFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _container = new CosmosDbBuilder()
-          .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest")
-          .Build();
+                    .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest")
+                    .WithCleanUp(true)
+                    .Build();
 
-        await _container.StartAsync().ConfigureAwait(false);
+        await _container.StartAsync();
 
-        var port = _container.GetMappedPublicPort(8081);
-        Endpoint = $"https://localhost:{port}/";
+        var connectionString = _container.GetConnectionString();
 
-        // Bypass self-signed cert; safe in tests.
         Client = new CosmosClient(
-            Endpoint,
-            Key,
+            connectionString,
             new CosmosClientOptions
             {
                 ConnectionMode = ConnectionMode.Gateway,
-                HttpClientFactory = () => new HttpClient(new HttpClientHandler
+                HttpClientFactory = () => _container.HttpClient,
+                SerializerOptions = new CosmosSerializationOptions
                 {
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                })
+                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+                }
             });
 
         // Ensure database and container exist (match your store defaults)

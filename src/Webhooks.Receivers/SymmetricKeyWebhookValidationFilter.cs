@@ -127,7 +127,7 @@ public sealed class SymmetricKeyWebhookValidationFilter(
             return Results.Unauthorized();
         }
 
-        if (payloadBytes is null)
+        if (payloadBytes is null || payloadBytes.Length == 0)
         {
             _logger.LogWarning("Webhook rejected: payload missing or too large.");
             return Results.Unauthorized();
@@ -170,6 +170,7 @@ public sealed class SymmetricKeyWebhookValidationFilter(
                 // Best-effort scrub before continuing.
                 CryptographicOperations.ZeroMemory(expectedSignature);
                 Array.Clear(payloadBytes, 0, payloadBytes.Length);
+                context.Arguments.Add(new WebhookHeader(msgId, timestamp.Value));
                 return await next(context);
             }
         }
@@ -385,3 +386,5 @@ public sealed class SymmetricKeyWebhookValidationFilter(
         }
     }
 }
+
+public sealed record WebhookHeader(string Id, DateTimeOffset ReceivedAt);

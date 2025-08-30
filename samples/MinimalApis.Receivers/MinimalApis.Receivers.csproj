@@ -8,10 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
+        <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" Version="9.4.1" />
+        <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" Version="9.4.1" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\Webhooks.Receivers.Storage.CosmosDb\Webhooks.Receivers.Storage.CosmosDb.csproj" />
       <ProjectReference Include="..\..\src\Webhooks.Receivers\Webhooks.Receivers.csproj" />
       <ProjectReference Include="..\Webhooks.ServiceDefaults\Webhooks.ServiceDefaults.csproj" />
     </ItemGroup>

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Webhooks.Publishers;
 
@@ -17,13 +17,9 @@ public sealed class WebhookPublisher(
     private static readonly UTF8Encoding SafeUtf8Encoding =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-
-    private readonly IPublisherKeyRetriever
-        _publisherKeyRetriever =
-            publisherKeyRetriever ?? throw new ArgumentNullException(nameof(publisherKeyRetriever));
-
-    private readonly EndpointFilterInvocationContext _keyContext = new PublisherEndpointFilterInvocationContext();
+    private readonly HttpClient _httpClient = httpClient;
+    private readonly TimeProvider _timeProvider = timeProvider;
+    private readonly IPublisherKeyRetriever _publisherKeyRetriever = publisherKeyRetriever;
 
     /// <summary>
     /// Builds the value for the webhook-signature header for the given inputs using base64url (unpadded).
@@ -37,7 +33,7 @@ public sealed class WebhookPublisher(
         var tag = ComputeTag(key, messageId, timestamp, payload);
         try
         {
-            var sig = Base64UrlEncode(tag);
+            var sig = WebEncoders.Base64UrlEncode(tag);
             return $"t={timestamp.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture)}, v1={sig}";
         }
         finally
@@ -53,7 +49,7 @@ public sealed class WebhookPublisher(
         string contentType = "application/json")
     {
         if (endpoint is null) throw new ArgumentNullException(nameof(endpoint));
-        var now = timeProvider.GetUtcNow();
+        var now = _timeProvider.GetUtcNow();
         var sigHeader = BuildSignatureHeader(messageId, now, payload.Span);
         var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
@@ -113,22 +109,5 @@ public sealed class WebhookPublisher(
                 CryptographicOperations.ZeroMemory(prefixBytes);
             }
         }
-    }
-
-    private static string Base64UrlEncode(ReadOnlySpan<byte> bytes)
-    {
-        var s = Convert.ToBase64String(bytes);
-        return s.TrimEnd('=').Replace('+', '-').Replace('/', '_');
-    }
-
-    // Minimal invocation context used solely for key retrieval via IKeyRetriever in publisher scenarios.
-    private sealed class PublisherEndpointFilterInvocationContext : EndpointFilterInvocationContext
-    {
-        private static readonly HttpContext s_httpContext = new DefaultHttpContext();
-        private static readonly IList<object?> s_arguments = Array.Empty<object?>();
-
-        public override T GetArgument<T>(int index) => throw new NotSupportedException();
-        public override HttpContext HttpContext => s_httpContext;
-        public override IList<object?> Arguments => s_arguments;
     }
 }

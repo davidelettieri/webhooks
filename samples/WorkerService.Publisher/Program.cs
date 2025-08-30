@@ -5,7 +5,8 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IWebhookPublisher, WebhookPublisher>();
-builder.Services.AddSingleton<IPublisherKeyRetriever>(_ => new OptionsKeyRetriever("whsec_test_123"));
+builder.Services.Configure<WebhookPublisherOptions>(builder.Configuration.GetSection("WebhookPublisher"));
+builder.Services.AddSingleton<IPublisherKeyRetriever, OptionsKeyRetriever>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 var host = builder.Build();

@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 
 // Configure a dev/test secret. Replace with configuration or secrets in production.
-builder.Services.Configure<WebhookValidationFilterOptions>(opts => { opts.Key = "whsec_test_123"; });
+builder.Services.Configure<WebhookValidationFilterOptions>(builder.Configuration.GetSection("WebhookValidationFilter"));
 
 // Provide an IKeyRetriever that returns the symmetric key bytes
 builder.Services.AddSingleton<IValidationFilterKeyRetriever, OptionsKeyRetriever>();

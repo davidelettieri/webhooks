@@ -11,20 +11,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a59669e5-343b-4167-9b0d-e0239b29baea" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/Webhooks.Publishers/IWebhookPublisher.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.StandardWebhooks/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.StandardWebhooks/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Webhooks.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Webhooks.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/samples/MinimalApis/MinimalApis.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/samples/MinimalApis.Receivers/MinimalApis.Receivers.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/samples/MinimalApis/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/samples/MinimalApis.Receivers/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/samples/MinimalApis/Properties/launchSettings.json" beforeDir="false" afterPath="$PROJECT_DIR$/samples/MinimalApis.Receivers/Properties/launchSettings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/samples/MinimalApis/Samples.http" beforeDir="false" afterPath="$PROJECT_DIR$/samples/MinimalApis.Receivers/Samples.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/samples/MinimalApis/appsettings.Development.json" beforeDir="false" afterPath="$PROJECT_DIR$/samples/MinimalApis.Receivers/appsettings.Development.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/samples/MinimalApis/appsettings.json" beforeDir="false" afterPath="$PROJECT_DIR$/samples/MinimalApis.Receivers/appsettings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Webhooks.Publishers/WebhookPublisher.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Webhooks.Publishers/WebhookPublisher.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Webhooks.Publishers/Webhooks.Publishers.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/Webhooks.Publishers/Webhooks.Publishers.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Webhooks.Tests/WebhookPublisherTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Webhooks.Tests/WebhookPublisherTests.cs" afterDir="false" />
-    </list>
+    <list default="true" id="a59669e5-343b-4167-9b0d-e0239b29baea" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -181,7 +168,7 @@
       <workItem from="1755969390135" duration="80000" />
       <workItem from="1756128359512" duration="235000" />
       <workItem from="1756400597748" duration="2026000" />
-      <workItem from="1756476213184" duration="5176000" />
+      <workItem from="1756476213184" duration="5257000" />
     </task>
     <task id="LOCAL-00001" summary="feat: initial commit">
       <option name="closed" value="true" />

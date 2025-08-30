@@ -1,9 +1,7 @@
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using StandardWebhooks;
 using Webhooks.Publishers;
 using Webhooks.Receivers;
 

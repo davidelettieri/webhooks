@@ -34,6 +34,7 @@ jobs:
           dotnet test Webhooks.sln \
             --configuration Release \
             --no-build \
+            --logger "trx;LogFilePrefix=test_results_" \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults
 

@@ -10,9 +10,10 @@ public class WebhookPublisherTests
     [Fact]
     public async Task Publisher_Headers_Validate_In_Middleware()
     {
+        const long t = 1700000000;
         var key = "publishersecretkey000000000000000"u8.ToArray();
         var publisher = new WebhookPublisher(new HttpClient(new SocketsHttpHandler()),
-            new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key));
+            new StaticTimeProvider(t), new FixedValidationWebhookKeyRetriever(key));
 
         var payload = "{\"n\":42}"u8.ToArray();
         var msgId = "evt_pub_1";
@@ -21,7 +22,7 @@ public class WebhookPublisherTests
         var ctx = TestHelpers.CreateHttpContext(body: payload);
         ctx.Request.Headers["webhook-id"] = req.Headers.GetValues("webhook-id").First();
         ctx.Request.Headers["webhook-signature"] = req.Headers.GetValues("webhook-signature").First();
-
+        ctx.Request.Headers["webhook-timestamp"] = req.Headers.GetValues("webhook-timestamp").First();
         var mw = new SymmetricKeyWebhookValidationMiddleware(new NullLogger<SymmetricKeyWebhookValidationMiddleware>(),
             new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key),
             _ =>

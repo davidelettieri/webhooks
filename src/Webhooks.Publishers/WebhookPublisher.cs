@@ -58,6 +58,8 @@ public sealed class WebhookPublisher(
         req.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         req.Headers.TryAddWithoutValidation("webhook-id", messageId);
         req.Headers.TryAddWithoutValidation("webhook-signature", sigHeader);
+        req.Headers.TryAddWithoutValidation("webhook-timestamp",
+            now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture));
         return req;
     }
 

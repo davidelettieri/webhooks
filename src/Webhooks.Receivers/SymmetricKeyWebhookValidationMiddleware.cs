@@ -26,6 +26,7 @@ public class SymmetricKeyWebhookValidationMiddleware(
     // Header names
     private const string IdHeaderKey = "webhook-id";
     private const string SignatureHeaderKey = "webhook-signature";
+    private const string TimestampHeaderKey = "webhook-timestamp";
 
     // Time window tolerance (anti-replay window)
     private const int ToleranceInSeconds = 60 * 5;
@@ -48,12 +49,19 @@ public class SymmetricKeyWebhookValidationMiddleware(
         // Extract and validate required headers first (cheapest checks).
         var headers = request.Headers;
 
-        string? msgId = headers.TryGetValue(IdHeaderKey, out var unbrandedId) ? unbrandedId.ToString() : null;
+        string? msgId = headers.TryGetValue(IdHeaderKey, out var unbrandedId)
+            ? unbrandedId.ToString()
+            : null;
         string? msgSignature = headers.TryGetValue(SignatureHeaderKey, out var signatureHeader)
             ? signatureHeader.ToString()
             : null;
-
-        if (string.IsNullOrWhiteSpace(msgId) || string.IsNullOrWhiteSpace(msgSignature))
+        string? msgTimestamp = headers.TryGetValue(TimestampHeaderKey, out var timestampHeader)
+            ? timestampHeader.ToString()
+            : null;
+        
+        if (string.IsNullOrWhiteSpace(msgId)
+            || string.IsNullOrWhiteSpace(msgSignature)
+            || string.IsNullOrWhiteSpace(msgTimestamp))
         {
             _logger.LogWarning("Webhook rejected: missing required headers.");
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -68,7 +76,7 @@ public class SymmetricKeyWebhookValidationMiddleware(
         }
 
         // Parse signature header (key=value CSV) and extract timestamp/signatures
-        if (!TryParseSignatureHeader(msgSignature, out var parsed))
+        if (!TryParseSignatureHeader(msgSignature, msgTimestamp, out var parsed))
         {
             _logger.LogWarning("Webhook rejected: malformed signature header.");
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -265,16 +273,23 @@ public class SymmetricKeyWebhookValidationMiddleware(
 
 // Robust parser for the signature header using key=value CSV only.
 // Expected keys: t (unix timestamp seconds), v1 (one or more entries), k/kid (optional key id).
-    private static bool TryParseSignatureHeader(string headerValue, out SignatureHeaderComponents result)
+    private static bool TryParseSignatureHeader(string msgSignature, string mgsTimestamp,
+        out SignatureHeaderComponents result)
     {
         result = new SignatureHeaderComponents();
-        if (string.IsNullOrWhiteSpace(headerValue))
+        if (string.IsNullOrWhiteSpace(msgSignature) ||
+            string.IsNullOrWhiteSpace(mgsTimestamp))
         {
             return false;
         }
+        
+        if (long.TryParse(mgsTimestamp, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ts))
+        {
+            result.TimestampUnixSeconds = ts;
+        }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        var parts = headerValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parts = msgSignature.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (parts.Length > 10)
         {
             return false; // cap total parts to avoid header-inflation DoS
@@ -300,13 +315,6 @@ public class SymmetricKeyWebhookValidationMiddleware(
             {
                 case "v1":
                     if (seen.Add(value)) result.V1Base64.Add(value);
-                    break;
-                case "t":
-                    if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ts))
-                    {
-                        result.TimestampUnixSeconds = ts;
-                    }
-
                     break;
                 case "k":
                 case "kid":

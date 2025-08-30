@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Webhooks.sln
+
+      - name: Build
+        run: dotnet build Webhooks.sln --configuration Release --no-restore
+
+      - name: Test with coverage
+        run: |
+          dotnet test Webhooks.sln \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=test_results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/**/*.trx
+
+      - name: Report test summary
+        if: always()
+        run: |
+          echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+          file=$(ls TestResults/**/*.trx 2>/dev/null | head -n1)
+          if [ -n "$file" ]; then
+            line=$(sed -n 's/.*<Counters[^>]*total="\([0-9]*\)"[^>]*passed="\([0-9]*\)"[^>]*failed="\([0-9]*\)".*/\1 \2 \3/p' "$file" | head -n1)
+            if [ -n "$line" ]; then
+              total=$(echo "$line" | awk '{print $1}')
+              passed=$(echo "$line" | awk '{print $2}')
+              failed=$(echo "$line" | awk '{print $3}')
+              echo "Tests: ${passed}/${total} passed, ${failed} failed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "TRX found but couldn't parse counters." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "No TRX file found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Collect coverage artifacts
+        if: always()
+        run: |
+          mkdir -p coverage
+          find TestResults -type f -name "coverage.cobertura.xml" -exec cp {} coverage/ \;
+          find TestResults -type f -name "coverage.info" -exec cp {} coverage/ \;
+          find TestResults -type f -name "coverage.json" -exec cp {} coverage/ \;
+
+      - name: Report coverage summary
+        if: always()
+        run: |
+          echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          file=$(ls coverage/coverage.cobertura.xml 2>/dev/null | head -n1)
+          if [ -z "$file" ]; then
+            file=$(ls coverage/*.cobertura.xml 2>/dev/null | head -n1)
+          fi
+          if [ -n "$file" ]; then
+            total=$(sed -n 's/.*line-rate="\([0-9.]*\)".*/\1/p' "$file" | head -n1)
+            if [ -n "$total" ]; then
+              pct=$(awk -v t="$total" 'BEGIN { printf "%.2f", t*100 }')
+              echo "Total line coverage: ${pct}%" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Cobertura found but couldn't parse percentage." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "No Cobertura coverage file found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Publish coverage as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage

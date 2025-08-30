@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Webhooks.Publishers;
 using Webhooks.Receivers;
@@ -10,7 +8,7 @@ namespace StandardWebhooks.Tests;
 public class WebhookPublisherTests
 {
     [Fact]
-    public async Task Publisher_Headers_Validate_In_Filter()
+    public async Task Publisher_Headers_Validate_In_Middleware()
     {
         var key = "publishersecretkey000000000000000"u8.ToArray();
         var publisher = new WebhookPublisher(new HttpClient(new SocketsHttpHandler()),
@@ -24,10 +22,14 @@ public class WebhookPublisherTests
         ctx.Request.Headers["webhook-id"] = req.Headers.GetValues("webhook-id").First();
         ctx.Request.Headers["webhook-signature"] = req.Headers.GetValues("webhook-signature").First();
 
-        var filter = new SymmetricKeyWebhookValidationFilter(new NullLogger<SymmetricKeyWebhookValidationFilter>(),
-            new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key));
-        var inv = TestHelpers.CreateInvocationContext(ctx);
-        var res = await filter.InvokeAsync(inv, _ => ValueTask.FromResult<object?>(Results.Ok()));
-        Assert.IsType<Ok>(res);
+        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(),
+            new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key),
+            _ =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status200OK;
+                return Task.CompletedTask;
+            });
+        await mw.InvokeAsync(ctx);
+        Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
     }
 }

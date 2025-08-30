@@ -1,6 +1,7 @@
 using Webhooks.Receivers;
 using WebHooks.Receivers.Storage;
 using Webhooks.Receivers.Storage.CosmosDb.Registry;
+using Webhooks.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +37,7 @@ webhooks.MapPost("/receive",
         HttpRequest req,
         WebhookHeader header,
         IWebhookPayloadStore store,
-        ILogger<Program> logger,
+        ILogger<Samples.Program> logger,
         CancellationToken cancellationToken) =>
 
     {
@@ -51,4 +52,7 @@ app.MapGet("/", () => "Running!");
 
 app.Run();
 
-public partial class Program;
+namespace Samples
+{
+    public partial class Program;
+}

@@ -5,7 +5,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Webhooks.Receivers;
+
+namespace Webhooks.Receivers;
 
 public class SymmetricKeyWebhookValidationMiddleware(
     ILogger<SymmetricKeyWebhookValidationMiddleware> logger,
@@ -99,11 +100,10 @@ public class SymmetricKeyWebhookValidationMiddleware(
         }
 
         // Short-circuit on known-too-large bodies
-        if (request.ContentLength is {
-            } contentLength and > MaxPayloadBytes)
+        if (request.ContentLength is { } contentLength and > MaxPayloadBytes)
         {
             _logger.LogWarning("Webhook rejected: payload too large. Content-Length={Length}", contentLength);
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
             return;
         }
 
@@ -184,8 +184,9 @@ public class SymmetricKeyWebhookValidationMiddleware(
                 // Best-effort scrub before continuing.
                 CryptographicOperations.ZeroMemory(expectedSignature);
                 Array.Clear(payloadBytes, 0, payloadBytes.Length);
-                context.Items.Add(new("webhook_header", new WebhookHeader(msgId, timestamp.Value)));
+                context.Items["webhook_header"] = new WebhookHeader(msgId, timestamp.Value);
                 await _next(context);
+                return;
             }
         }
 

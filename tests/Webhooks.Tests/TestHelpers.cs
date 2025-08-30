@@ -27,11 +27,6 @@ internal static class TestHelpers
         return ctx;
     }
 
-    public static EndpointFilterInvocationContext CreateInvocationContext(HttpContext httpContext)
-    {
-        return new DefaultEndpointFilterInvocationContext(httpContext, new List<object?>());
-    }
-
     public static ILogger<SymmetricKeyWebhookValidationMiddleware> NullLogger() =>
         new NullLogger<SymmetricKeyWebhookValidationMiddleware>();
 }
@@ -50,16 +45,4 @@ internal sealed class FixedValidationWebhookKeyRetriever(byte[] key)
     public byte[] GetKey() => _key;
 }
 
-internal sealed class DefaultEndpointFilterInvocationContext(
-    HttpContext httpContext,
-    IReadOnlyList<object?> arguments)
-    : EndpointFilterInvocationContext
-{
-    public override T GetArgument<T>(int index)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override HttpContext HttpContext => httpContext;
-    public override IList<object?> Arguments => [..arguments];
-}
+ 

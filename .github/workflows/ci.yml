@@ -46,22 +46,12 @@ jobs:
 
       - name: Report test summary
         if: always()
-        run: |
-          echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
-          file=$(ls TestResults/**/*.trx 2>/dev/null | head -n1)
-          if [ -n "$file" ]; then
-            line=$(sed -n 's/.*<Counters[^>]*total="\([0-9]*\)"[^>]*passed="\([0-9]*\)"[^>]*failed="\([0-9]*\)".*/\1 \2 \3/p' "$file" | head -n1)
-            if [ -n "$line" ]; then
-              total=$(echo "$line" | awk '{print $1}')
-              passed=$(echo "$line" | awk '{print $2}')
-              failed=$(echo "$line" | awk '{print $3}')
-              echo "Tests: ${passed}/${total} passed, ${failed} failed" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "TRX found but couldn't parse counters." >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "No TRX file found." >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: dorny/test-reporter@v2
+        with:
+            artifact: test-results            # artifact name
+            name: dotnet tests                  # Name of the check run which will be created
+            path: 'TestResults/**/*.trx'                     # Path to test results (inside artifact .zip)
+            reporter: dotnet-trx    
 
       - name: Collect coverage artifacts
         if: always()

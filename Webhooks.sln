@@ -18,6 +18,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Publishers", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerService.Publisher", "samples\WorkerService.Publisher\WorkerService.Publisher.csproj", "{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebHooks.Receivers.Storage", "src\WebHooks.Receivers.Storage\WebHooks.Receivers.Storage.csproj", "{DF6ECE31-286F-4983-B3C1-8DD30C82FED8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Receivers.Storage.CosmosDb", "src\Webhooks.Receivers.Storage.CosmosDb\Webhooks.Receivers.Storage.CosmosDb.csproj", "{41EF4D6D-52E0-4D5C-AF32-430249260FCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.AppHost", "samples\Webhooks.AppHost\Webhooks.AppHost.csproj", "{923CBB73-7084-4CA8-97E3-574B1C0DB1F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.ServiceDefaults", "samples\Webhooks.ServiceDefaults\Webhooks.ServiceDefaults.csproj", "{9AB0CF62-B1DD-41A0-B8B4-4C7C1EA5CF70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +52,22 @@ Global
 		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF6ECE31-286F-4983-B3C1-8DD30C82FED8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF6ECE31-286F-4983-B3C1-8DD30C82FED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF6ECE31-286F-4983-B3C1-8DD30C82FED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF6ECE31-286F-4983-B3C1-8DD30C82FED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41EF4D6D-52E0-4D5C-AF32-430249260FCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41EF4D6D-52E0-4D5C-AF32-430249260FCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41EF4D6D-52E0-4D5C-AF32-430249260FCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41EF4D6D-52E0-4D5C-AF32-430249260FCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{923CBB73-7084-4CA8-97E3-574B1C0DB1F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{923CBB73-7084-4CA8-97E3-574B1C0DB1F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{923CBB73-7084-4CA8-97E3-574B1C0DB1F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{923CBB73-7084-4CA8-97E3-574B1C0DB1F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AB0CF62-B1DD-41A0-B8B4-4C7C1EA5CF70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AB0CF62-B1DD-41A0-B8B4-4C7C1EA5CF70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AB0CF62-B1DD-41A0-B8B4-4C7C1EA5CF70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AB0CF62-B1DD-41A0-B8B4-4C7C1EA5CF70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +78,10 @@ Global
 		{D2F34136-56F4-4EF8-A1B7-8B3232656C8B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{BDE1ED6A-3581-487F-8EA5-83F732217691} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{582BE85E-E4B4-4274-A965-D41CD7E3D8B2} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{DF6ECE31-286F-4983-B3C1-8DD30C82FED8} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{41EF4D6D-52E0-4D5C-AF32-430249260FCC} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{923CBB73-7084-4CA8-97E3-574B1C0DB1F2} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{9AB0CF62-B1DD-41A0-B8B4-4C7C1EA5CF70} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A745D0CD-D6A8-475E-80E1-F71FD0944FA1}

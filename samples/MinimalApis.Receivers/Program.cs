@@ -2,6 +2,8 @@ using Webhooks.Receivers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Dependencies required by the filter
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -12,6 +14,8 @@ builder.Services.Configure<WebhookValidationFilterOptions>(builder.Configuration
 builder.Services.AddSingleton<IValidationFilterKeyRetriever, OptionsKeyRetriever>();
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Group all webhook endpoints and attach the validation filter
 var webhooks = app.MapGroup("/webhooks")

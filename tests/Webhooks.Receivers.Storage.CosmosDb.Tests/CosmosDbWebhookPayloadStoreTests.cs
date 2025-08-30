@@ -1,16 +1,13 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Webhooks.Receivers.Storage.CosmosDb;
 
 namespace Webhooks.Receivers.Storage.CosmosDb.Tests;
 
 [Collection("cosmos-emulator")]
-public sealed class CosmosDbWebhookPayloadStoreTests
+public sealed class CosmosDbWebhookPayloadStoreTests(CosmosEmulatorFixture fixture)
 {
-    private readonly CosmosEmulatorFixture _fx;
-
-    public CosmosDbWebhookPayloadStoreTests(CosmosEmulatorFixture fx) => _fx = fx;
+    private readonly CosmosEmulatorFixture _fixture = fixture;
 
     [Fact]
     public async Task StorePayloadAsync_inserts_document()
@@ -22,7 +19,7 @@ public sealed class CosmosDbWebhookPayloadStoreTests
             Container = "payloads"
         });
 
-        var store = new CosmosDbWebhookPayloadStore(options, _fx.Client);
+        var store = new CosmosDbWebhookPayloadStore(options, _fixture.Client);
 
         var id = Guid.NewGuid().ToString("N");
         var payload = """{"hello":"world"}""";
@@ -32,7 +29,7 @@ public sealed class CosmosDbWebhookPayloadStoreTests
         await store.StorePayloadAsync(id, receivedAt, payload);
 
         // Assert - read back from container
-        var container = _fx.Client.GetContainer("webhooks", "payloads");
+        var container = _fixture.Client.GetContainer("webhooks", "payloads");
         var response = await container.ReadItemAsync<PayloadDoc>(id, new PartitionKey(id));
 
         Assert.Equal(id, response.Resource.Id);

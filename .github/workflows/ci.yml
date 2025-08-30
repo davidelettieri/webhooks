@@ -50,9 +50,9 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v2
         with:
-            artifact: test-results            # artifact name
-            name: dotnet tests                  # Name of the check run which will be created
-            path: 'TestResults/**/*.trx'                     # Path to test results (inside artifact .zip)
+            artifact: test-results    # artifact name
+            name: dotnet tests        # Name of the check run which will be created
+            path: 'test_results.trx'  # Path to test results (inside artifact .zip)
             reporter: dotnet-trx    
 
       - name: Collect coverage artifacts

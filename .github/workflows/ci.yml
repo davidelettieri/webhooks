@@ -8,7 +8,9 @@ on:
 
 permissions:
   contents: read
-
+  actions: read
+  checks: write
+  
 jobs:
   build-test:
     runs-on: ubuntu-latest

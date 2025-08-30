@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
-using Xunit;
-using Webhooks.Publishers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Webhooks.Receivers;
+using Webhooks.Tests.Common;
 
-namespace StandardWebhooks.Tests;
+namespace Webhooks.Publishers.Tests;
 
 public class WebhookPublisherTests
 {
@@ -22,7 +22,7 @@ public class WebhookPublisherTests
         ctx.Request.Headers["webhook-id"] = req.Headers.GetValues("webhook-id").First();
         ctx.Request.Headers["webhook-signature"] = req.Headers.GetValues("webhook-signature").First();
 
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(new NullLogger<SymmetricKeyWebhookValidationMiddleware>(),
             new StaticTimeProvider(1_700_000_000), new FixedValidationWebhookKeyRetriever(key),
             _ =>
             {
@@ -32,4 +32,11 @@ public class WebhookPublisherTests
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
     }
+}
+
+internal sealed class FixedValidationWebhookKeyRetriever(byte[] key)
+    : IValidationWebhookKeyRetriever, IPublisherKeyRetriever
+{
+    public byte[] GetKey(HttpContext context) => key;
+    public byte[] GetKey() => key;
 }

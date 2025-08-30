@@ -2,13 +2,17 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using Webhooks.Receivers;
-using Xunit;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Webhooks.Tests.Common;
 
-namespace StandardWebhooks.Tests;
+namespace Webhooks.Receivers.Tests;
 
 public class SymmetricKeyWebhookValidationMiddlewareTests
 {
+    private static readonly ILogger<SymmetricKeyWebhookValidationMiddleware> Logger =
+        new NullLogger<SymmetricKeyWebhookValidationMiddleware>();
+
     private static byte[] Sign(byte[] key, string id, long t, byte[] body)
     {
         var prefix = Encoding.UTF8.GetBytes($"{id}.{t.ToString(CultureInfo.InvariantCulture)}.");
@@ -47,7 +51,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
 
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
@@ -67,7 +73,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
 
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
@@ -79,7 +87,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var t = 1_700_000_000L;
         var ctx = TestHelpers.CreateHttpContext(body: Encoding.UTF8.GetBytes("{}"));
         // Missing id and signature
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            new NullLogger<SymmetricKeyWebhookValidationMiddleware>(),
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(Encoding.UTF8.GetBytes("k")), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
@@ -93,7 +103,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var ctx = TestHelpers.CreateHttpContext(body: Encoding.UTF8.GetBytes("{}"));
         ctx.Request.Headers["webhook-id"] = "evt";
         ctx.Request.Headers["webhook-signature"] = "v1=abc"; // missing t
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
@@ -117,7 +129,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={within}, v1={B64Url(tag)}";
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(now),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(now),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
@@ -127,8 +141,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={outside}, v1={B64Url(tag)}";
-    await mw.InvokeAsync(ctx);
-    Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
+        await mw.InvokeAsync(ctx);
+        Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
     }
 
     [Fact]
@@ -144,7 +158,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = sig;
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
@@ -161,7 +177,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={wrong}";
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
@@ -178,7 +196,9 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={tag}";
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(
+            Logger, 
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status413PayloadTooLarge, ctx.Response.StatusCode);
@@ -199,7 +219,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
 
         // Cancel before read
         cts.Cancel();
-        var mw = new SymmetricKeyWebhookValidationMiddleware(TestHelpers.NullLogger(), new StaticTimeProvider(t),
+        var mw = new SymmetricKeyWebhookValidationMiddleware(new NullLogger<SymmetricKeyWebhookValidationMiddleware>(),
+            new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
         Assert.Equal(499, ctx.Response.StatusCode);

@@ -70,15 +70,16 @@ This repository provides a standard implementation for webhooks in .NET, includi
    ```bash
    # Start receiver
    cd samples/MinimalApis.Receivers && dotnet run &
-   
+
    # Test basic endpoint
    curl http://localhost:5033/
-   
+
    # Test webhook endpoint (should show validation warning)
    curl -X POST http://localhost:5033/webhooks/receive \
      -H "Content-Type: application/json" \
-     -H "X-Webhook-Timestamp: $(date +%s)" \
-     -H "X-Webhook-Signature-256: v1=test" \
+     -H "Webhook-Id: test" \"
+     -H "Webhook-Timestamp: $(date +%s)" \
+     -H "Webhook-Signature: v1=test" \
      -d '{"message": "test webhook"}'
    ```
 
@@ -95,7 +96,7 @@ This repository provides a standard implementation for webhooks in .NET, includi
 
 ### Core Libraries
 - **`src/Webhooks.Receivers`** - Core webhook receiving functionality, signature validation
-- **`src/Webhooks.Publishers`** - Core webhook publishing functionality  
+- **`src/Webhooks.Publishers`** - Core webhook publishing functionality
 - **`src/WebHooks.Receivers.Storage`** - Storage abstractions for webhook payloads
 - **`src/Webhooks.Receivers.Storage.CosmosDb`** - Azure CosmosDB storage implementation
 
@@ -107,7 +108,7 @@ This repository provides a standard implementation for webhooks in .NET, includi
 
 ### Test Projects
 - **`tests/Webhooks.Publishers.Tests`** - Publisher functionality tests
-- **`tests/Webhooks.Receivers.Tests`** - Receiver and validation middleware tests  
+- **`tests/Webhooks.Receivers.Tests`** - Receiver and validation middleware tests
 - **`tests/Webhooks.Receivers.Storage.CosmosDb.Tests`** - CosmosDB integration tests
 - **`tests/Webhooks.Tests.Common`** - Shared test utilities
 
@@ -140,7 +141,7 @@ This repository provides a standard implementation for webhooks in .NET, includi
 - Always test with: `tests/Webhooks.Receivers.Tests/SymmetricKeyWebhookValidationMiddlewareTests.cs`
 - Validation logic uses HMAC-SHA256 with configurable keys
 
-### Adding Storage Implementations  
+### Adding Storage Implementations
 - Implement interfaces in: `src/WebHooks.Receivers.Storage/`
 - Follow pattern from: `src/Webhooks.Receivers.Storage.CosmosDb/`
 - Add integration tests with testcontainers if external dependencies
@@ -151,20 +152,23 @@ This repository provides a standard implementation for webhooks in .NET, includi
 - Uses Ubuntu latest with .NET 9.0.x SDK
 - Includes test result publishing and code coverage collection
 
+### Copilot instructions
+- Whenever a new project is added, update this instruction file to reflect the new structure and any specific build/test instructions.
+
 ## Troubleshooting
 
 ### Common Issues
 1. **Build fails with NETSDK1045**: Install .NET 9.0 SDK (not 8.0)
 2. **Tests timeout**: Increase timeout, Docker may be slow to start containers
 3. **Aspire fails to start**: Environment may not support Aspire orchestration - use individual samples instead
-4. **Webhook validation fails**: Check `X-Webhook-Signature-256` header format and signing key
+4. **Webhook validation fails**: Check `Webhook-Signature` header format and signing key, check `Webhook-Timestamp` for clock skew, check required `Webhook-Id` header
 
 ### Quick Diagnostics
 ```bash
 # Check .NET version
 dotnet --version
 
-# Verify solution structure  
+# Verify solution structure
 dotnet sln list
 
 # Check for compilation issues

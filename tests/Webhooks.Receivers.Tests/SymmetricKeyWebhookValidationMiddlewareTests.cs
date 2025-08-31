@@ -49,7 +49,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
 
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={sig}";
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
 
         var mw = new SymmetricKeyWebhookValidationMiddleware(
             Logger,
@@ -71,7 +72,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
 
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={sig}";
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
 
         var mw = new SymmetricKeyWebhookValidationMiddleware(
             Logger,
@@ -112,7 +114,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
 
         ctx = TestHelpers.CreateHttpContext(body: Encoding.UTF8.GetBytes("{}"));
         ctx.Request.Headers["webhook-id"] = "evt";
-        ctx.Request.Headers["webhook-signature"] = $"t={t}"; // missing v1
+        ctx.Request.Headers["webhook-signature"] = ""; // missing v1
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
     }
@@ -128,7 +131,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var tag = Sign(key, id, within, body);
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={within}, v1={B64Url(tag)}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={B64Url(tag)}";
+        ctx.Request.Headers["webhook-timestamp"] = within.ToString(CultureInfo.InvariantCulture);
         var mw = new SymmetricKeyWebhookValidationMiddleware(
             Logger,
             new StaticTimeProvider(now),
@@ -140,7 +144,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         tag = Sign(key, id, outside, body);
         ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={outside}, v1={B64Url(tag)}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={B64Url(tag)}";
+        ctx.Request.Headers["webhook-timestamp"] = outside.ToString(CultureInfo.InvariantCulture);
         await mw.InvokeAsync(ctx);
         Assert.Equal(StatusCodes.Status401Unauthorized, ctx.Response.StatusCode);
     }
@@ -154,10 +159,11 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var body = Encoding.UTF8.GetBytes("{}");
         var tag = B64Url(Sign(key, id, t, body));
         // Create more than cap
-        var sig = "t=" + t + ", " + string.Join(", ", Enumerable.Range(0, 10).Select(_ => "v1=" + tag));
+        var sig = string.Join(", ", Enumerable.Range(0, 11).Select(_ => "v1=" + tag));
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = sig;
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
         var mw = new SymmetricKeyWebhookValidationMiddleware(
             Logger,
             new StaticTimeProvider(t),
@@ -176,7 +182,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var wrong = Convert.ToBase64String(Encoding.UTF8.GetBytes("notasig"));
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={wrong}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={wrong}";
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
         var mw = new SymmetricKeyWebhookValidationMiddleware(
             Logger,
             new StaticTimeProvider(t),
@@ -192,10 +199,11 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var id = "evt";
         var t = 1_700_000_000L;
         var body = new byte[256 * 1024 + 1];
-        var tag = B64Url(Sign(key, id, t, Array.Empty<byte>())); // body won't match anyway
+        var tag = B64Url(Sign(key, id, t, [])); // body won't match anyway
         var ctx = TestHelpers.CreateHttpContext(body: body);
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={tag}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={tag}";
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
         var mw = new SymmetricKeyWebhookValidationMiddleware(
             Logger,
             new StaticTimeProvider(t),
@@ -215,7 +223,8 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         var cts = new CancellationTokenSource();
         ctx.RequestAborted = cts.Token;
         ctx.Request.Headers["webhook-id"] = id;
-        ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={B64Url(Sign(key, id, t, body))}";
+        ctx.Request.Headers["webhook-signature"] = $"v1={B64Url(Sign(key, id, t, body))}";
+        ctx.Request.Headers["webhook-timestamp"] = t.ToString(CultureInfo.InvariantCulture);
 
         // Cancel before read
         cts.Cancel();

@@ -14,6 +14,7 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
           dotnet test Webhooks.sln \
             --configuration Release \
             --no-build \
-            --logger "trx;LogFileName=test_results.trx" \
+            --logger "trx;LogFilePrefix=test_results_" \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults
 

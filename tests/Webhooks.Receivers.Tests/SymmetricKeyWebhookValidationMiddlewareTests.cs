@@ -52,7 +52,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
 
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
@@ -74,7 +74,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={sig}";
 
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
@@ -104,7 +104,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = "evt";
         ctx.Request.Headers["webhook-signature"] = "v1=abc"; // missing t
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
@@ -130,7 +130,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={within}, v1={B64Url(tag)}";
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(now),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
@@ -159,7 +159,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = sig;
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
@@ -178,7 +178,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={wrong}";
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);
@@ -197,7 +197,7 @@ public class SymmetricKeyWebhookValidationMiddlewareTests
         ctx.Request.Headers["webhook-id"] = id;
         ctx.Request.Headers["webhook-signature"] = $"t={t}, v1={tag}";
         var mw = new SymmetricKeyWebhookValidationMiddleware(
-            Logger, 
+            Logger,
             new StaticTimeProvider(t),
             new FixedValidationWebhookKeyRetriever(key), NextPass);
         await mw.InvokeAsync(ctx);

@@ -14,6 +14,11 @@ This repository provides a standard implementation for webhooks in .NET, includi
   ```
 - Verify installation: `dotnet --version` should show `9.0.100` or higher
 - Docker is required for CosmosDB integration tests (uses testcontainers)
+- Install python 3.11.9+ for pre-commit:
+  ```bash
+  sudo apt-get install -y python3 python3-pip
+  pip install pre-commit
+  ```
 
 ### Build and Test Process
 - **NEVER CANCEL builds or tests** - they may take longer than expected
@@ -151,6 +156,16 @@ This repository provides a standard implementation for webhooks in .NET, includi
 - Pipeline automatically runs on push to main and PR creation
 - Uses Ubuntu latest with .NET 9.0.x SDK
 - Includes test result publishing and code coverage collection
+
+### Pre-commit Hooks
+- Install pre-commit hooks:
+  ```bash
+  pre-commit install
+  ```
+- Run manually before staging files:
+  ```bash
+  pre-commit run --all-files
+  ```
 
 ### Copilot instructions
 - Whenever a new project is added, update this instruction file to reflect the new structure and any specific build/test instructions.

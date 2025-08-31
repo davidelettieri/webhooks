@@ -10,5 +10,5 @@ public static class ServiceCollectionExtensions
         Action<CosmosDbWebhookPayloadStoreOptions>? configure = null)
         => services
             .Configure(configure ?? (_ => { }))
-            .AddSingleton<IWebhookPayloadStore, CosmosDbWebhookPayloadStore>();
+            .AddSingleton<ISimpleWebhookPayloadStore, CosmosDbSimpleWebhookPayloadStore>();
 }

@@ -2,9 +2,9 @@
 
 public interface IWebhookPayloadStore
 {
-    Task StorePayloadAsync(
+    Task StorePayloadAsync<TPayload>(
         string id,
         DateTimeOffset receivedAt,
-        string payload,
+        TPayload payload,
         CancellationToken cancellationToken = default);
 }

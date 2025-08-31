@@ -19,7 +19,7 @@ public sealed class CosmosDbWebhookPayloadStoreTests(CosmosEmulatorFixture fixtu
             Container = "payloads"
         });
 
-        var store = new CosmosDbWebhookPayloadStore(options, _fixture.Client);
+        var store = new CosmosDbSimpleWebhookPayloadStore(options, _fixture.Client);
 
         var id = Guid.NewGuid().ToString("N");
         var payload = """{"hello":"world"}""";

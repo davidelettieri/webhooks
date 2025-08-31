@@ -1,31 +1,29 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 using WebHooks.Receivers.Storage;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Webhooks.Receivers.Storage.CosmosDb;
 
-public sealed class CosmosDbWebhookPayloadStore(
+public sealed class CosmosDbSimpleWebhookPayloadStore(
     IOptions<CosmosDbWebhookPayloadStoreOptions> options,
-    CosmosClient client,
-    JsonSerializerOptions jsonSerializerOptions) : IWebhookPayloadStore
+    CosmosClient client) : ISimpleWebhookPayloadStore
 {
     private readonly Container _container = client.GetContainer(options.Value.Database, options.Value.Container);
-    private readonly JsonSerializerOptions _jsonSerializerOptions = jsonSerializerOptions;
 
-    public async Task StorePayloadAsync<TPayload>(
+    public async Task StorePayloadAsync(
         string id,
         DateTimeOffset receivedAt,
-        TPayload payload,
+        string payload,
         CancellationToken cancellationToken = default)
     {
-        var payloadString = JsonSerializer.Serialize(payload, _jsonSerializerOptions);
         var document = new WebhookPayloadDocument
         {
             Id = id,
-            Payload = payloadString,
+            Payload = payload,
             ReceivedAt = receivedAt,
-            Type = typeof(TPayload).FullName
+            Type = null
         };
 
         await _container.CreateItemAsync(document, new PartitionKey(document.Id),

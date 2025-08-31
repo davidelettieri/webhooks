@@ -35,7 +35,7 @@ var webhooks = app.MapGroup("/webhooks");
 webhooks.MapPost("/receive",
     async (
         HttpContext context,
-        IWebhookPayloadStore store,
+        ISimpleWebhookPayloadStore store,
         ILogger<Program> logger,
         CancellationToken cancellationToken) =>
 

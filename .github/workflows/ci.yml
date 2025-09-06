@@ -51,10 +51,10 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v2
         with:
-            artifact: test-results    # artifact name
-            name: dotnet tests        # Name of the check run which will be created
-            path: '*.trx'             # Path to test results (inside artifact .zip)
-            reporter: dotnet-trx
+          artifact: test-results    # artifact name
+          name: dotnet tests        # Name of the check run which will be created
+          path: '*.trx'             # Path to test results (inside artifact .zip)
+          reporter: dotnet-trx
 
       - name: Collect coverage artifacts
         if: always()
@@ -90,3 +90,39 @@ jobs:
         with:
           name: coverage
           path: coverage
+  publish-packages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        witn:h:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install minver
+        run: dotnet tool install --global minver-cli --version 6.0.0
+
+      - name: Restore
+        run: dotnet restore Webhooks.sln
+
+      - name: Build
+        run: dotnet build Webhooks.sln --configuration Release --no-restore
+
+      - name: Pack NuGet packages
+        run: |
+          version=$(minver -v e -t runtime-)
+          mkdir -p artifacts
+          dotnet pack src/Webhooks.Publishers/Webhooks.Publishers.csproj \
+            --configuration Release --no-build -p:PackageVersion=$version -p:ContinuousIntegrationBuild=true -o ./artifacts
+          dotnet pack src/Webhooks.Receivers/Webhooks.Receivers.csproj \
+            --configuration Release --no-build -p:PackageVersion=$version -p:ContinuousIntegrationBuild=true -o ./artifacts
+      - name: Publish NuGet packages
+        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json

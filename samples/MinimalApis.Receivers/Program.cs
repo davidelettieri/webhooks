@@ -38,6 +38,7 @@ webhooks.MapPost("/receive",
 
         if (header == null)
         {
+            // It won't reach here if the middleware is working
             return Results.BadRequest(new { error = "Could not parse webhook." });
         }
 

@@ -1,14 +1,9 @@
 using Webhooks.Receivers;
-using WebHooks.Receivers.Storage;
-using Webhooks.Receivers.Storage.CosmosDb.Registry;
 using Webhooks.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-builder.AddAzureCosmosClient(
-    connectionName: "cosmos-db"); // Configure a dev/test secret. Replace with configuration or secrets in production.
 
 // Dependencies required by the filter
 builder.Services.AddSingleton(TimeProvider.System);
@@ -16,9 +11,6 @@ builder.Services.Configure<WebhookValidationFilterOptions>(builder.Configuration
 
 // Provide an IKeyRetriever that returns the symmetric key bytes
 builder.Services.AddSingleton<IValidationWebhookKeyRetriever, OptionsKeyRetriever>();
-
-// Add storage
-builder.Services.AddCosmosDbWebhookPayloadStorage();
 
 var app = builder.Build();
 
@@ -35,7 +27,6 @@ var webhooks = app.MapGroup("/webhooks");
 webhooks.MapPost("/receive",
     async (
         HttpContext context,
-        ISimpleWebhookPayloadStore store,
         ILogger<Program> logger,
         CancellationToken cancellationToken) =>
 
@@ -50,7 +41,6 @@ webhooks.MapPost("/receive",
             return Results.BadRequest(new { error = "Could not parse webhook." });
         }
 
-        await store.StorePayloadAsync(header.Id, header.Timestamp, body, cancellationToken);
         return Results.Ok(new { received = true, length = body.Length, body });
     });
 

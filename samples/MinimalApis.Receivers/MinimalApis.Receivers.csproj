@@ -14,7 +14,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Webhooks.Receivers.Storage.CosmosDb\Webhooks.Receivers.Storage.CosmosDb.csproj" />
       <ProjectReference Include="..\..\src\Webhooks.Receivers\Webhooks.Receivers.csproj" />
       <ProjectReference Include="..\Webhooks.ServiceDefaults\Webhooks.ServiceDefaults.csproj" />
     </ItemGroup>

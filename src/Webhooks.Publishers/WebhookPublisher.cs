@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace Webhooks.Publishers;
 
@@ -33,7 +32,7 @@ public sealed class WebhookPublisher(
         var tag = ComputeTag(key, messageId, timestamp, payload);
         try
         {
-            var sig = WebEncoders.Base64UrlEncode(tag);
+            var sig = Convert.ToBase64String(tag);
             return $"v1={sig}";
         }
         finally

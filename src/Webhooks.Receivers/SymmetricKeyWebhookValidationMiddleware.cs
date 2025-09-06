@@ -328,30 +328,12 @@ public class SymmetricKeyWebhookValidationMiddleware(
         return result.TimestampUnixSeconds.HasValue || result.V1Base64.Count > 0 || result.KeyId is not null;
     }
 
-// Accept base64url (preferred, unpadded) or standard base64; normalize and decode.
+    // Accept base64url (preferred, unpadded) or standard base64; normalize and decode.
     private static bool TryDecodeBase64OrBase64Url(string value, out byte[] bytes)
     {
-        // Heuristic: base64url if it contains '-' or '_' or lacks '+' and '/'. Normalize to base64.
-        bool looksUrl = value.IndexOf('-') >= 0 || value.IndexOf('_') >= 0 ||
-                        (value.IndexOf('+') < 0 && value.IndexOf('/') < 0);
-        string normalized;
-        if (looksUrl)
-        {
-            normalized = value.Replace('-', '+').Replace('_', '/');
-            int padding = normalized.Length % 4;
-            if (padding != 0)
-            {
-                normalized = normalized.PadRight(normalized.Length + (4 - padding), '=');
-            }
-        }
-        else
-        {
-            normalized = value;
-        }
-
         try
         {
-            bytes = Convert.FromBase64String(normalized);
+            bytes = Convert.FromBase64String(value);
             return true;
         }
         catch

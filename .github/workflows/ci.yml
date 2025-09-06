@@ -98,7 +98,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        witn:h:
+        with:
           fetch-depth: 0
           filter: tree:0
 

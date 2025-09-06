@@ -10,6 +10,7 @@ permissions:
   contents: read
   actions: read
   checks: write
+  packages: write
 
 jobs:
   build-test:
@@ -125,4 +126,4 @@ jobs:
           dotnet pack src/Webhooks.Receivers/Webhooks.Receivers.csproj \
             --configuration Release --no-build -p:PackageVersion=$version -p:ContinuousIntegrationBuild=true -o ./artifacts
       - name: Publish NuGet packages
-        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/davidelettieri/index.json

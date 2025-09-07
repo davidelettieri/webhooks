@@ -33,7 +33,7 @@ public sealed class WebhookPublisher(
         try
         {
             var sig = Convert.ToBase64String(tag);
-            return $"v1={sig}";
+            return $"v1,{sig}";
         }
         finally
         {

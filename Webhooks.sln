@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Receivers.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Tests.Common", "tests\Webhooks.Tests.Common\Webhooks.Tests.Common.csproj", "{048C1E55-F243-46FB-AA7A-EE4E2C5E7C04}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks.Compatibility.Tests", "tests\Webhooks.Compatibility.Tests\Webhooks.Compatibility.Tests.csproj", "{70E58990-F1D2-4F77-A3F6-A828603FD2A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -68,6 +70,10 @@ Global
 		{048C1E55-F243-46FB-AA7A-EE4E2C5E7C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{048C1E55-F243-46FB-AA7A-EE4E2C5E7C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{048C1E55-F243-46FB-AA7A-EE4E2C5E7C04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70E58990-F1D2-4F77-A3F6-A828603FD2A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E58990-F1D2-4F77-A3F6-A828603FD2A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70E58990-F1D2-4F77-A3F6-A828603FD2A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70E58990-F1D2-4F77-A3F6-A828603FD2A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,6 +88,7 @@ Global
 		{266D2067-DA81-49A5-9FC6-833A24DE5871} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{B7E06C71-BDF9-44F2-BD72-0C7EEB4F8BF0} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{048C1E55-F243-46FB-AA7A-EE4E2C5E7C04} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{70E58990-F1D2-4F77-A3F6-A828603FD2A5} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A745D0CD-D6A8-475E-80E1-F71FD0944FA1}

@@ -8,7 +8,7 @@ It does not provide storage, delivery or configuration mechanisms, as those are 
 
 The signing is required to ensure that the payload has not been tampered with in transit, and that it comes from a trusted source. It is based on a pre-shared secret between the sender and the receiver. If you are on the receiving end and the publisher uses a known IP address range, you can use that as an additional security measure.
 
-Two packages are published to (github registry)[https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry], feel free to use them in your projects. A sample aspire project is included to demonstrate how to use the packages. The pre-share secret should be store securely, I provided two sample options retriever that recover the secret from the options pattern. You can use secrets to store the key or provide your own implementation to retrieve the secret from a secure location.
+Two packages are published to [github registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry), feel free to use them in your projects. A sample aspire project is included to demonstrate how to use the packages. The pre-share secret should be store securely, I provided two sample options retriever that recover the secret from the options pattern. You can use secrets to store the key or provide your own implementation to retrieve the secret from a secure location.
 
 On the publisher side the interface for the key retriever is:
 

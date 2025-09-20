@@ -12,7 +12,7 @@
 POST http://localhost:5033/webhooks/receive
 Content-Type: application/json
 webhook-id: evt_0001
-webhook-signature: v1={{signature}}
+webhook-signature: v1,{{signature}}
 webhook-timestamp: {{t}}
 
 {

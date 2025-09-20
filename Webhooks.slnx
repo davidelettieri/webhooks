@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/MinimalApis.Receivers/MinimalApis.Receivers.csproj" />
+    <Project Path="samples/Webhooks.AppHost/Webhooks.AppHost.csproj" />
+    <Project Path="samples/Webhooks.ServiceDefaults/Webhooks.ServiceDefaults.csproj" />
+    <Project Path="samples/WorkerService.Publisher/WorkerService.Publisher.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Webhooks.Publishers/Webhooks.Publishers.csproj" />
+    <Project Path="src/Webhooks.Receivers/Webhooks.Receivers.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Webhooks.Compatibility.Tests/Webhooks.Compatibility.Tests.csproj" />
+    <Project Path="tests/Webhooks.Publishers.Tests/Webhooks.Publishers.Tests.csproj" />
+    <Project Path="tests/Webhooks.Receivers.Tests/Webhooks.Receivers.Tests.csproj" />
+    <Project Path="tests/Webhooks.Tests.Common/Webhooks.Tests.Common.csproj" />
+  </Folder>
+</Solution>

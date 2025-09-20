@@ -75,7 +75,6 @@ public class SymmetricKeyWebhookValidationMiddleware(
             return;
         }
 
-        // Parse signature header (key=value CSV) and extract timestamp/signatures
         if (!TryParseSignatureHeader(msgSignature, msgTimestamp, out var parsed))
         {
             _logger.LogWarning("Webhook rejected: malformed signature header.");
@@ -289,7 +288,7 @@ public class SymmetricKeyWebhookValidationMiddleware(
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        var parts = msgSignature.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parts = msgSignature.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (parts.Length > 10)
         {
             return false; // cap total parts to avoid header-inflation DoS
@@ -297,7 +296,7 @@ public class SymmetricKeyWebhookValidationMiddleware(
 
         foreach (var p in parts)
         {
-            var idx = p.IndexOf('=');
+            var idx = p.IndexOf(',');
             if (idx <= 0 || idx == p.Length - 1)
             {
                 continue;
@@ -315,10 +314,6 @@ public class SymmetricKeyWebhookValidationMiddleware(
             {
                 case "v1":
                     if (seen.Add(value)) result.V1Base64.Add(value);
-                    break;
-                case "k":
-                case "kid":
-                    result.KeyId = value;
                     break;
                 // ignore unknown keys deliberately
             }

@@ -1,7 +1,5 @@
 ﻿using System.Net;
-using System.Net.Http;
 using System.Text;
-using Microsoft.AspNetCore.Http;
 using StandardWebhooks;
 using Webhooks.Publishers;
 using Webhooks.Tests.Common;
@@ -11,7 +9,7 @@ namespace Webhooks.Compatibility.Tests;
 public sealed class CodeFactorsTests
 {
     [Fact]
-    public async Task Test1()
+    public async Task Signature_Should_Be_Equal_To_Standard_Webhook_Package()
     {
         const long timestamp = 1_700_000_000L;
         const string secret = "publishersecretkey000000000000000";

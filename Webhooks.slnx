@@ -5,6 +5,9 @@
     <Project Path="samples/Webhooks.ServiceDefaults/Webhooks.ServiceDefaults.csproj" />
     <Project Path="samples/WorkerService.Publisher/WorkerService.Publisher.csproj" />
   </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Webhooks.Publishers/Webhooks.Publishers.csproj" />
     <Project Path="src/Webhooks.Receivers/Webhooks.Receivers.csproj" />

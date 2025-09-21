@@ -122,7 +122,7 @@ jobs:
 
       - name: Pack NuGet packages
         run: |
-          version=$(minver -v e -t runtime-)
+          version=$(minver -v e)
           mkdir -p artifacts
           dotnet pack src/Webhooks.Publishers/Webhooks.Publishers.csproj \
             --configuration Release --no-build -p:PackageVersion=$version -p:ContinuousIntegrationBuild=true -o ./artifacts
